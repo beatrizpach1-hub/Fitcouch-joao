@@ -54,7 +54,7 @@ input,select,textarea,button{font-family:inherit}
 .ib{width:34px;height:34px;border-radius:50%;background:var(--bg3);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text)}
 
 /* BOTTOM NAV */
-.bn{display:flex;background:var(--bg2);border-top:1px solid var(--bg3);padding-bottom:env(safe-area-inset-bottom);flex-shrink:0}
+.bn{display:flex;background:var(--bg2);border-top:1px solid var(--bg3);padding-bottom:env(safe-area-inset-bottom);flex-shrink:0;position:relative;z-index:10}
 .nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;cursor:pointer;color:var(--text3);border:none;background:none}
 .nb.on{color:var(--acc)}
 .nb svg{width:20px;height:20px}
@@ -305,7 +305,7 @@ input,select,textarea,button{font-family:inherit}
 </div>
 
 <!-- ADMIN APP -->
-<div class="screen" id="aa">
+<div class="screen" id="aa" style="height:100vh;max-height:100vh">
   <div class="tb">
     <div style="line-height:1.2">
       <div style="font-size:14px;font-weight:300;letter-spacing:3px">JOÃO MENDES</div>
@@ -313,12 +313,12 @@ input,select,textarea,button{font-family:inherit}
     </div>
     <button class="ib" onclick="logout()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
   </div>
-  <div style="flex:1;overflow:hidden;position:relative">
-    <div class="mc scroll on" id="ap-cl" style="position:absolute;inset:0"></div>
-    <div class="mc scroll" id="ap-pl" style="position:absolute;inset:0;display:none"></div>
-    <div class="mc scroll" id="ap-nu" style="position:absolute;inset:0;display:none"></div>
+  <div style="flex:1;overflow:hidden;position:relative;-webkit-overflow-scrolling:touch">
+    <div class="mc scroll on" id="ap-cl" style="position:absolute;inset:0;overflow-y:auto"></div>
+    <div class="mc scroll" id="ap-pl" style="position:absolute;inset:0;display:none;overflow-y:auto"></div>
+    <div class="mc scroll" id="ap-nu" style="position:absolute;inset:0;display:none;overflow-y:auto"></div>
   </div>
-  <div class="bn">
+  <div class="bn" style="flex-shrink:0;min-height:60px">
     <button class="nb on" data-p="cl" onclick="aN('cl',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75"/><path d="M21 21v-2a4 4 0 00-3-3.85"/></svg><span>Clientes</span></button>
     <button class="nb" data-p="pl" onclick="aN('pl',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg><span>Planos</span></button>
     <button class="nb" data-p="nu" onclick="aN('nu',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8 2 5 5.5 5 9c0 3 1.5 5.5 4 7v4h6v-4c2.5-1.5 4-4 4-7 0-3.5-3-7-7-7z"/></svg><span>Nutrição</span></button>
@@ -456,7 +456,7 @@ async function doLogin(){
   qs('lE').textContent='';
   if(!u||!p){qs('lE').textContent='Preenche os campos.';return;}
   const b=qs('bL');b.disabled=true;b.textContent='A entrar…';
-  if(u==='admin'&&p==='joaomendes2024'){CU={username:'admin',name:'João Mendes',is_admin:true,week_goal:0};isA=true;enterApp();b.disabled=false;b.textContent='Entrar →';return;}
+  if(u.toLowerCase()==='admin'&&p==='joaomendes2024'){CU={username:'admin',name:'João Mendes',is_admin:true,week_goal:0};isA=true;enterApp();b.disabled=false;b.textContent='Entrar →';return;}
   const {data,error}=await sb.from('profiles').select('*').eq('username',u).eq('password',p).single();
   b.disabled=false;b.textContent='Entrar →';
   if(error||!data){qs('lE').textContent='Utilizador ou password incorretos.';return;}
