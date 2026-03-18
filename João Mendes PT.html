@@ -233,10 +233,16 @@ input,select,textarea,button{font-family:inherit}
       </div>
       <div id="fL">
         <div class="f"><label>Utilizador</label><input type="text" id="lU" placeholder="username" autocomplete="username"/></div>
-        <div class="f"><label>Password</label><input type="password" id="lP" placeholder="••••••••" autocomplete="current-password"/></div>
+        <div class="f"><label>Password</label><div style="position:relative"><input type="password" id="lP" placeholder="••••••••" autocomplete="current-password" style="padding-right:44px"/><button onclick="togglePwd('lP',this)" type="button" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text2);cursor:pointer;font-size:16px;padding:4px">👁</button></div></div>
         <div class="err" id="lE"></div>
         <button class="bmain" id="bL" onclick="doLogin()">Entrar →</button>
         <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--text3)">Treinador: admin / joaomendes2024</div>
+        <div style="text-align:center;margin-top:8px"><button onclick="showReset()" style="background:none;border:none;color:var(--text2);font-size:12px;cursor:pointer;text-decoration:underline">Esqueci a password</button></div>
+        <div id="resetBox" style="display:none;margin-top:12px;background:var(--bg3);border-radius:10px;padding:14px">
+          <div class="f"><label>O teu username</label><input type="text" id="resetU" placeholder="username"/></div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5">Pede ao teu PT para repor a password no Supabase, ou usa o botão abaixo para contactar.</div>
+          <button onclick="copyResetInfo()" class="bmain" style="font-size:13px;padding:10px">📋 Copiar info para o PT</button>
+        </div>
       </div>
       <div id="fR" style="display:none">
         <div class="f">
@@ -250,7 +256,7 @@ input,select,textarea,button{font-family:inherit}
           <div id="sRN" style="background:rgba(168,168,168,.1);border-radius:10px;padding:12px;margin-bottom:14px;font-size:14px;text-align:center;color:var(--acc)"></div>
           <div class="f2">
             <div class="f"><label>Utilizador</label><input type="text" id="rU" placeholder="maria123"/></div>
-            <div class="f"><label>Password</label><input type="password" id="rP" placeholder="mínimo 6"/></div>
+            <div class="f"><label>Password</label><div style="position:relative"><input type="password" id="rP" placeholder="mínimo 6" style="padding-right:44px"/><button onclick="togglePwd('rP',this)" type="button" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text2);cursor:pointer;font-size:16px;padding:4px">👁</button></div></div>
           </div>
           <div class="f2">
             <div class="f"><label>Peso (kg)</label><input type="number" id="rW" placeholder="70" step="0.1"/></div>
@@ -880,6 +886,22 @@ function swANT(t,btn){
 }
 
 qs('lP').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
+function togglePwd(id,btn){
+  const inp=qs(id);
+  if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
+  else{inp.type='password';btn.textContent='👁';}
+}
+function showReset(){
+  const box=qs('resetBox');
+  box.style.display=box.style.display==='none'?'block':'none';
+}
+function copyResetInfo(){
+  const u=qs('resetU').value.trim()||'(username não preenchido)';
+  const msg='Olá João, esqueci a password da app. O meu username é: '+u;
+  if(navigator.clipboard){navigator.clipboard.writeText(msg).then(()=>toast('Copiado! Envia ao João 📱'));}
+  else{toast('Username: '+u+' - envia ao João');}
+}
 
 // ── CONVITE ──
 let pAFileData=null,pAFileName2=null,pAFileType=null;
