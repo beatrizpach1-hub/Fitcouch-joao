@@ -219,56 +219,58 @@ input,select,textarea,button{font-family:inherit}
 </div>
 
 <!-- AUTH -->
-<div class="screen" id="as">
-  <div class="ah">
-    <div class="alogo">JOÃO MENDES</div>
-    <div class="asub">THE PERSONAL TRAINER</div>
-    <div class="atag">A tua evolução<br/><span>começa aqui.</span></div>
-  </div>
-  <div class="aform">
-    <div class="tabs">
-      <div class="tab on" id="tL" onclick="stab('login')">Entrar</div>
-      <div class="tab" id="tR" onclick="stab('reg')">Registar</div>
+<div class="screen" id="as" style="overflow-y:auto;-webkit-overflow-scrolling:touch;justify-content:flex-start;padding-bottom:env(safe-area-inset-bottom)">
+  <div style="min-height:100%;display:flex;flex-direction:column;justify-content:center;padding:env(safe-area-inset-top) 0 0">
+    <div style="text-align:center;padding:32px 24px 24px">
+      <div style="font-size:26px;font-weight:300;letter-spacing:7px;color:#fff">JOÃO MENDES</div>
+      <div style="font-size:9px;letter-spacing:6px;color:#555;margin-top:6px">THE PERSONAL TRAINER</div>
+      <div style="font-size:22px;font-weight:700;line-height:1.2;letter-spacing:-0.5px;margin-top:20px">A tua evolução<br/><span style="color:var(--acc)">começa aqui.</span></div>
     </div>
-    <div id="fL">
-      <div class="f"><label>Utilizador</label><input type="text" id="lU" placeholder="username" autocomplete="username"/></div>
-      <div class="f"><label>Password</label><input type="password" id="lP" placeholder="••••••••" autocomplete="current-password"/></div>
-      <div class="err" id="lE"></div>
-      <button class="bmain" id="bL" onclick="doLogin()">Entrar →</button>
-      <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--text3)">Treinador: admin / joaomendes2024</div>
-    </div>
-    <div id="fR" style="display:none">
-      <div class="f">
-        <label>O teu nome (como o PT te registou)</label>
-        <div style="display:flex;gap:8px">
-          <input type="text" id="rS" placeholder="Ex: Maria Silva" style="flex:1"/>
-          <button class="bsa" onclick="srchName()" style="padding:0 14px;border-radius:10px">Procurar</button>
-        </div>
+    <div style="background:var(--bg2);border-radius:22px 22px 0 0;padding:24px 22px;padding-bottom:calc(24px + env(safe-area-inset-bottom));flex:1">
+      <div class="tabs">
+        <div class="tab on" id="tL" onclick="stab('login')">Entrar</div>
+        <div class="tab" id="tR" onclick="stab('reg')">Registar</div>
       </div>
-      <div id="sR" style="display:none">
-        <div id="sRN" style="background:rgba(168,168,168,.1);border-radius:10px;padding:12px;margin-bottom:14px;font-size:14px;text-align:center;color:var(--acc)"></div>
-        <div class="f2">
-          <div class="f"><label>Utilizador</label><input type="text" id="rU" placeholder="maria123"/></div>
-          <div class="f"><label>Password</label><input type="password" id="rP" placeholder="mínimo 6"/></div>
-        </div>
-        <div class="f2">
-          <div class="f"><label>Peso (kg)</label><input type="number" id="rW" placeholder="70" step="0.1"/></div>
-          <div class="f"><label>Altura (cm)</label><input type="number" id="rH" placeholder="165"/></div>
-        </div>
+      <div id="fL">
+        <div class="f"><label>Utilizador</label><input type="text" id="lU" placeholder="username" autocomplete="username"/></div>
+        <div class="f"><label>Password</label><input type="password" id="lP" placeholder="••••••••" autocomplete="current-password"/></div>
+        <div class="err" id="lE"></div>
+        <button class="bmain" id="bL" onclick="doLogin()">Entrar →</button>
+        <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--text3)">Treinador: admin / joaomendes2024</div>
+      </div>
+      <div id="fR" style="display:none">
         <div class="f">
-          <label>Objetivo: treinos por semana</label>
-          <div class="chips" id="rGC">
-            <div class="chip" onclick="sg(2,this)">2×</div>
-            <div class="chip on" onclick="sg(3,this)">3×</div>
-            <div class="chip" onclick="sg(4,this)">4×</div>
-            <div class="chip" onclick="sg(5,this)">5×</div>
-            <div class="chip" onclick="sg(6,this)">6×</div>
+          <label>O teu nome (como o PT te registou)</label>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="rS" placeholder="Ex: Maria Silva" style="flex:1"/>
+            <button class="bsa" onclick="srchName()" style="padding:0 14px;border-radius:10px">Procurar</button>
           </div>
         </div>
-        <div class="err" id="rE"></div>
-        <button class="bmain" id="bR" onclick="doReg()">Criar conta →</button>
+        <div id="sR" style="display:none">
+          <div id="sRN" style="background:rgba(168,168,168,.1);border-radius:10px;padding:12px;margin-bottom:14px;font-size:14px;text-align:center;color:var(--acc)"></div>
+          <div class="f2">
+            <div class="f"><label>Utilizador</label><input type="text" id="rU" placeholder="maria123"/></div>
+            <div class="f"><label>Password</label><input type="password" id="rP" placeholder="mínimo 6"/></div>
+          </div>
+          <div class="f2">
+            <div class="f"><label>Peso (kg)</label><input type="number" id="rW" placeholder="70" step="0.1"/></div>
+            <div class="f"><label>Altura (cm)</label><input type="number" id="rH" placeholder="165"/></div>
+          </div>
+          <div class="f">
+            <label>Objetivo: treinos por semana</label>
+            <div class="chips" id="rGC">
+              <div class="chip" onclick="sg(2,this)">2×</div>
+              <div class="chip on" onclick="sg(3,this)">3×</div>
+              <div class="chip" onclick="sg(4,this)">4×</div>
+              <div class="chip" onclick="sg(5,this)">5×</div>
+              <div class="chip" onclick="sg(6,this)">6×</div>
+            </div>
+          </div>
+          <div class="err" id="rE"></div>
+          <button class="bmain" id="bR" onclick="doReg()">Criar conta →</button>
+        </div>
+        <div class="err" id="rES"></div>
       </div>
-      <div class="err" id="rES"></div>
     </div>
   </div>
 </div>
