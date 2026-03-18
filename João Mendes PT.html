@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="pt">
 <head>
 <meta charset="UTF-8"/>
@@ -231,9 +231,9 @@ input,select,textarea,button{font-family:var(--fb)}
 <!-- LOADING -->
 <div class="screen active" id="loadScreen">
   <div class="load-logo">
-    <svg width="160" height="60" viewBox="0 0 320 80">
-      <text x="50%" y="38" text-anchor="middle" font-family="'Syne',sans-serif" font-size="36" font-weight="800" fill="#f0f0f0" letter-spacing="6">JOÃO MENDES</text>
-      <text x="50%" y="58" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="11" font-weight="300" fill="#888" letter-spacing="8">THE PERSONAL TRAINER</text>
+    <svg width="280" height="70" viewBox="0 0 380 80">
+      <text x="50%" y="38" text-anchor="middle" font-family="'Syne',sans-serif" font-size="34" font-weight="800" fill="#f0f0f0" letter-spacing="5">JOÃO MENDES</text>
+      <text x="50%" y="60" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="11" font-weight="300" fill="#888" letter-spacing="8">THE PERSONAL TRAINER</text>
     </svg>
     <div class="load-spinner"></div>
   </div>
@@ -245,9 +245,9 @@ input,select,textarea,button{font-family:var(--fb)}
   <div class="auth-content">
     <div class="auth-hero">
       <div class="brand-logo">
-        <svg width="220" height="55" viewBox="0 0 340 70">
-          <text x="50%" y="32" text-anchor="middle" font-family="'Syne',sans-serif" font-size="30" font-weight="800" fill="#f0f0f0" letter-spacing="5">JOÃO MENDES</text>
-          <text x="50%" y="52" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="10" font-weight="300" fill="#666" letter-spacing="7">THE PERSONAL TRAINER</text>
+        <svg width="300" height="65" viewBox="0 0 380 75">
+          <text x="50%" y="34" text-anchor="middle" font-family="'Syne',sans-serif" font-size="32" font-weight="800" fill="#f0f0f0" letter-spacing="4">JOÃO MENDES</text>
+          <text x="50%" y="56" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="10" font-weight="300" fill="#666" letter-spacing="7">THE PERSONAL TRAINER</text>
         </svg>
       </div>
       <div class="auth-tagline">A tua evolução<br/><span>começa aqui.</span></div>
@@ -264,6 +264,7 @@ input,select,textarea,button{font-family:var(--fb)}
         <button class="btn-main" id="btnLogin" onclick="doLogin()">Entrar →</button>
       </div>
       <div id="fReg" style="display:none">
+        <div class="field"><label>Código de convite</label><input type="text" id="rCode" placeholder="Código dado pelo teu PT" style="text-transform:uppercase;letter-spacing:2px"/></div>
         <div class="field"><label>Nome completo</label><input type="text" id="rN" placeholder="Ex: Maria Silva"/></div>
         <div class="field-row">
           <div class="field"><label>Utilizador</label><input type="text" id="rU" placeholder="maria123"/></div>
@@ -466,18 +467,26 @@ async function doLogin(){
 }
 
 async function doRegister(){
+  const code=qs('rCode').value.trim().toUpperCase();
   const name=qs('rN').value.trim(),user=qs('rU').value.trim(),pass=qs('rP').value;
   const weight=parseFloat(qs('rW').value)||null, height=parseFloat(qs('rH').value)||null;
   qs('rErr').textContent='';
+  if(!code){qs('rErr').textContent='Introduz o código de convite.';return;}
   if(!name||!user||!pass){qs('rErr').textContent='Preenche todos os campos.';return;}
   if(pass.length<6){qs('rErr').textContent='Password mínimo 6 caracteres.';return;}
-  const btn=qs('btnReg'); btn.disabled=true; btn.textContent='A criar…';
+  const btn=qs('btnReg'); btn.disabled=true; btn.textContent='A verificar…';
+  // Check invite code
+  const {data:invite,error:invErr}=await sb.from('invite_codes').select('*').eq('code',code).eq('used',false).single();
+  if(invErr||!invite){qs('rErr').textContent='Código de convite inválido ou já utilizado.';btn.disabled=false;btn.textContent='Criar conta →';return;}
   const {data:exists}=await sb.from('profiles').select('id').eq('username',user).single();
   if(exists){qs('rErr').textContent='Username já existe.';btn.disabled=false;btn.textContent='Criar conta →';return;}
+  btn.textContent='A criar…';
   const {data,error}=await sb.from('profiles').insert({username:user,password:pass,name,weight,height,week_goal:regGoal}).select().single();
-  btn.disabled=false; btn.textContent='Criar conta →';
-  if(error){qs('rErr').textContent='Erro ao criar conta. Tenta novamente.';console.error(error);return;}
+  if(error){qs('rErr').textContent='Erro ao criar conta. Tenta novamente.';console.error(error);btn.disabled=false;btn.textContent='Criar conta →';return;}
+  // Mark invite code as used
+  await sb.from('invite_codes').update({used:true,used_by:data.id,used_at:new Date().toISOString()}).eq('id',invite.id);
   if(weight){ await sb.from('measurements').insert({user_id:data.id,date:today(),peso:weight,muscle_pct:null,fat_pct:null}); }
+  btn.disabled=false; btn.textContent='Criar conta →';
   CU=data; isAdmin=false; enterApp();
 }
 
@@ -697,7 +706,7 @@ function aN(page,btn){
 // ── ADMIN CLIENTES ──
 async function loadAdminClientes(){
   const el=qs('ap-clientes');
-  el.innerHTML='<div class="card"><div class="section-title">Adicionar cliente</div><div class="field"><label>Nome</label><input type="text" id="acN" placeholder="Nome completo"/></div><div class="form-row"><div class="field"><label>Username</label><input type="text" id="acU" placeholder="username"/></div><div class="field"><label>Password</label><input type="password" id="acP" placeholder="password"/></div></div><button class="btn-sm-acc" id="btnAddC" onclick="addClient()" style="width:100%;padding:12px">Adicionar cliente</button></div><div class="card"><div class="section-title">Clientes</div><div id="cList"><div class="empty"><div class="ei">⏳</div><p>A carregar…</p></div></div></div>';
+  el.innerHTML='<div class="card"><div class="section-title">Gerar código de convite</div><div class="field"><label>Nome do cliente</label><input type="text" id="acN" placeholder="Ex: Maria Silva"/></div><button class="btn-sm-acc" id="btnAddC" onclick="addClient()" style="width:100%;padding:12px">Gerar convite</button><div id="inviteResult" style="display:none;margin-top:12px;background:rgba(200,255,0,.08);border:1px solid rgba(200,255,0,.2);border-radius:10px;padding:14px;text-align:center"><div style="font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Código de convite para</div><div id="inviteName" style="font-size:14px;font-weight:500;margin-bottom:10px"></div><div id="inviteCode" style="font-family:var(--fs);font-size:28px;font-weight:800;color:var(--acc);letter-spacing:4px"></div><div style="font-size:12px;color:var(--text2);margin-top:8px">Envia este código ao cliente para se registar na app</div></div></div><div class="card"><div class="section-title">Clientes</div><div id="cList"><div class="empty"><div class="ei">⏳</div><p>A carregar…</p></div></div></div>';
   const {data:users}=await sb.from('profiles').select('*').eq('is_admin',false).order('name');
   const listEl=qs('cList');
   if(!users||!users.length){listEl.innerHTML='<div class="empty"><div class="ei">👥</div><p>Sem clientes ainda.</p></div>';return;}
@@ -715,18 +724,20 @@ async function loadAdminClientes(){
     return `<div class="client-row"><div class="c-av">${init}</div><div class="c-info"><div class="c-name">${u.name}<span class="badge ${bCls}">${bTxt}</span></div><div class="c-meta">${total} treinos · ${weekDone}/${goal} esta semana · Peso: ${u.weight?u.weight+' kg':'—'}</div></div><div style="color:var(--text3);font-size:18px">›</div></div>`;
   }).join('');
 }
+
 async function addClient(){
-  const name=qs('acN').value.trim(),user=qs('acU').value.trim(),pass=qs('acP').value;
-  if(!name||!user||!pass){toast('Preenche todos os campos');return;}
+  const name=qs('acN').value.trim();
+  if(!name){toast('Escreve o nome do cliente');return;}
   const btn=qs('btnAddC'); btn.disabled=true;
-  const {data:ex}=await sb.from('profiles').select('id').eq('username',user).single();
-  if(ex){toast('Username já existe!');btn.disabled=false;return;}
-  const {error}=await sb.from('profiles').insert({username:user,password:pass,name,week_goal:3});
+  // Generate unique code
+  const code=name.split(' ')[0].toUpperCase().slice(0,4)+Math.floor(1000+Math.random()*9000);
+  const {error}=await sb.from('invite_codes').insert({code,name,used:false,created_at:new Date().toISOString()});
   btn.disabled=false;
-  if(error){toast('Erro ao criar cliente.');console.error(error);return;}
-  qs('acN').value=''; qs('acU').value=''; qs('acP').value='';
-  toast('Cliente adicionado! ✅');
-  loadAdminClientes();
+  if(error){toast('Erro ao gerar convite.');console.error(error);return;}
+  qs('inviteName').textContent=name;
+  qs('inviteCode').textContent=code;
+  qs('inviteResult').style.display='block';
+  qs('acN').value='';
 }
 
 // ── ADMIN PLANOS ──
