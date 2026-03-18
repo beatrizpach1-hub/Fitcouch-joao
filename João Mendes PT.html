@@ -15,8 +15,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 input,select,textarea,button{font-family:inherit}
 .scroll{overflow-y:auto;-webkit-overflow-scrolling:touch}
 .scroll::-webkit-scrollbar{width:0}
-#app{height:100vh;display:flex;flex-direction:column;max-width:430px;margin:0 auto}
-.screen{display:none;flex:1;overflow:hidden;flex-direction:column}
+#app{height:100vh;height:100dvh;display:flex;flex-direction:column;max-width:430px;margin:0 auto}
+.screen{display:none;flex:1;overflow:hidden;flex-direction:column;height:100%}
 .screen.active{display:flex}
 
 /* LOADING */
@@ -54,14 +54,14 @@ input,select,textarea,button{font-family:inherit}
 .ib{width:34px;height:34px;border-radius:50%;background:var(--bg3);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text)}
 
 /* BOTTOM NAV */
-.bn{display:flex;background:var(--bg2);border-top:1px solid var(--bg3);padding-bottom:env(safe-area-inset-bottom);flex-shrink:0;position:relative;z-index:10}
+.bn{display:flex;background:var(--bg2);border-top:1px solid var(--bg3);padding-bottom:env(safe-area-inset-bottom);flex-shrink:0;position:fixed;bottom:0;left:0;right:0;z-index:100;max-width:430px;margin:0 auto}
 .nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;cursor:pointer;color:var(--text3);border:none;background:none}
 .nb.on{color:var(--acc)}
 .nb svg{width:20px;height:20px}
 .nb span{font-size:10px;font-weight:500}
 
 /* PAGES */
-.mc{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px 20px}
+.mc{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px 80px}
 .mc::-webkit-scrollbar{width:0}
 .page{position:absolute;inset:0;display:none}
 .page.on{display:block}
