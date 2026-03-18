@@ -318,10 +318,10 @@ input,select,textarea,button{font-family:var(--fb)}
 <div class="screen" id="adminApp">
   <div class="topbar">
     <div style="display:flex;align-items:center;gap:10px">
-      <div style="line-height:1">
-  <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;letter-spacing:3px;color:#f0f0f0">JOÃO MENDES</div>
-  <div style="font-family:'DM Sans',sans-serif;font-size:7px;font-weight:300;letter-spacing:4px;color:#666;margin-top:2px">THE PERSONAL TRAINER</div>
-</div>
+      <div style="line-height:1.2">
+        <div style="font-family:'Exo 2',sans-serif;font-size:15px;font-weight:200;letter-spacing:3px;color:#f0f0f0">JOÃO MENDES</div>
+        <div style="font-family:'Exo 2',sans-serif;font-size:7px;font-weight:200;letter-spacing:4px;color:#555;margin-top:1px">THE PERSONAL TRAINER</div>
+      </div>
     </div>
     <button class="icon-btn" onclick="doLogout()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
   </div>
@@ -707,7 +707,28 @@ function aN(page,btn){
 // ── ADMIN CLIENTES ──
 async function loadAdminClientes(){
   const el=qs('ap-clientes');
-  el.innerHTML='<div class="card"><div class="section-title">Gerar código de convite</div><div class="field"><label>Nome do cliente</label><input type="text" id="acN" placeholder="Ex: Maria Silva"/></div><button class="btn-sm-acc" id="btnAddC" onclick="addClient()" style="width:100%;padding:12px">Gerar convite</button><div id="inviteResult" style="display:none;margin-top:12px;background:rgba(168,168,168,.08);border:1px solid rgba(168,168,168,.2);border-radius:10px;padding:14px;text-align:center"><div style="font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Código de convite para</div><div id="inviteName" style="font-size:14px;font-weight:500;margin-bottom:10px"></div><div id="inviteCode" style="font-family:var(--fs);font-size:28px;font-weight:800;color:var(--acc);letter-spacing:4px"></div><div style="font-size:12px;color:var(--text2);margin-top:8px">Envia este código ao cliente para se registar na app</div></div></div><div class="card"><div class="section-title">Clientes</div><div id="cList"><div class="empty"><div class="ei">⏳</div><p>A carregar…</p></div></div></div>';
+  el.innerHTML=`<div class="card">
+    <div class="section-title">Adicionar cliente</div>
+    <div class="field"><label>Nome</label><input type="text" id="acN" placeholder="Ex: Maria Silva"/></div>
+    <div class="form-row">
+      <div class="field"><label>Username</label><input type="text" id="acU" placeholder="maria123"/></div>
+      <div class="field"><label>Password</label><input type="password" id="acP" placeholder="password"/></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>Peso (kg)</label><input type="number" id="acW" placeholder="70" step="0.1"/></div>
+      <div class="field"><label>Altura (cm)</label><input type="number" id="acH" placeholder="165"/></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn-sm-acc" id="btnAddC" onclick="addClientDirect()" style="flex:2;padding:12px">Criar cliente</button>
+      <button class="btn-sm-ghost" onclick="genInviteInline()" style="flex:1;padding:12px">🔗 Convite</button>
+    </div>
+    <div id="inviteResult" style="display:none;margin-top:12px;background:rgba(168,168,168,.08);border:1px solid rgba(168,168,168,.2);border-radius:10px;padding:14px;text-align:center">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Código de convite</div>
+      <div id="inviteCode" style="font-family:var(--fs);font-size:28px;font-weight:800;color:var(--acc);letter-spacing:4px"></div>
+      <div style="font-size:12px;color:var(--text2);margin-top:8px">Envia ao cliente para se registar</div>
+    </div>
+  </div>
+  <div class="card"><div class="section-title">Clientes</div><div id="cList"><div class="empty"><div class="ei">⏳</div><p>A carregar…</p></div></div></div>`;
   const {data:users}=await sb.from('profiles').select('*').eq('is_admin',false).order('name');
   const listEl=qs('cList');
   if(!users||!users.length){listEl.innerHTML='<div class="empty"><div class="ei">👥</div><p>Sem clientes ainda.</p></div>';return;}
@@ -722,23 +743,90 @@ async function loadAdminClientes(){
     const pct=Math.min(100,Math.round(weekDone/goal*100));
     const bCls=pct>=100?'b-green':pct>=50?'b-orange':'b-red';
     const bTxt=pct>=100?'✓ Objetivo':pct>=50?'Em curso':'Abaixo';
-    return `<div class="client-row"><div class="c-av">${init}</div><div class="c-info"><div class="c-name">${u.name}<span class="badge ${bCls}">${bTxt}</span></div><div class="c-meta">${total} treinos · ${weekDone}/${goal} esta semana · Peso: ${u.weight?u.weight+' kg':'—'}</div></div><div style="color:var(--text3);font-size:18px">›</div></div>`;
+    return `<div class="client-row" onclick="openClientDetail('${u.id}','${u.name}')"><div class="c-av">${init}</div><div class="c-info"><div class="c-name">${u.name}<span class="badge ${bCls}">${bTxt}</span></div><div class="c-meta">${total} treinos · ${weekDone}/${goal} esta semana · Peso: ${u.weight?u.weight+' kg':'—'}</div></div><div style="color:var(--text3);font-size:18px">›</div></div>`;
   }).join('');
 }
 
-async function addClient(){
-  const name=qs('acN').value.trim();
-  if(!name){toast('Escreve o nome do cliente');return;}
-  const btn=qs('btnAddC'); btn.disabled=true;
-  // Generate unique code
+async function addClientDirect(){
+  const name=qs('acN').value.trim(),user=qs('acU').value.trim(),pass=qs('acP').value;
+  const weight=parseFloat(qs('acW').value)||null,height=parseFloat(qs('acH').value)||null;
+  if(!name||!user||!pass){toast('Preenche nome, username e password');return;}
+  const btn=qs('btnAddC'); btn.disabled=true; btn.textContent='A criar…';
+  const {data:ex}=await sb.from('profiles').select('id').eq('username',user).single();
+  if(ex){toast('Username já existe!');btn.disabled=false;btn.textContent='Criar cliente';return;}
+  const {error}=await sb.from('profiles').insert({username:user,password:pass,name,weight,height,week_goal:3});
+  btn.disabled=false; btn.textContent='Criar cliente';
+  if(error){toast('Erro ao criar.');console.error(error);return;}
+  qs('acN').value='';qs('acU').value='';qs('acP').value='';qs('acW').value='';qs('acH').value='';
+  toast('Cliente criado! ✅'); loadAdminClientes();
+}
+async function genInviteInline(){
+  const name=qs('acN').value.trim()||'Cliente';
   const code=name.split(' ')[0].toUpperCase().slice(0,4)+Math.floor(1000+Math.random()*9000);
-  const {error}=await sb.from('invite_codes').insert({code,name,used:false,created_at:new Date().toISOString()});
-  btn.disabled=false;
-  if(error){toast('Erro ao gerar convite.');console.error(error);return;}
-  qs('inviteName').textContent=name;
+  await sb.from('invite_codes').insert({code,name,used:false,created_at:new Date().toISOString()});
   qs('inviteCode').textContent=code;
   qs('inviteResult').style.display='block';
-  qs('acN').value='';
+  toast('Convite gerado! '+code);
+}
+async function openClientDetail(userId,userName){
+  const el=qs('ap-clientes');
+  el.innerHTML=`<div style="margin-bottom:14px"><button class="btn-sm-ghost" onclick="loadAdminClientes()">← Voltar</button></div>
+  <div class="card">
+    <div style="font-family:var(--fs);font-size:17px;font-weight:700;margin-bottom:14px">${userName}</div>
+    <div class="pill-tabs">
+      <div class="pill-tab active" onclick="switchClientTab('fotos',this)">Antes / Depois</div>
+      <div class="pill-tab" onclick="switchClientTab('info',this)">Info</div>
+    </div>
+    <div id="ct-fotos">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <div class="section-title">Antes</div>
+          <div id="foto-antes-preview" style="background:var(--bg3);border-radius:10px;height:160px;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="document.getElementById('inputAntes').click()">
+            <div style="text-align:center;color:var(--text3);font-size:13px">+ Foto</div>
+          </div>
+          <input type="file" id="inputAntes" accept="image/*" style="display:none" onchange="previewFoto(this,'foto-antes-preview','${userId}','antes')"/>
+        </div>
+        <div>
+          <div class="section-title">Depois</div>
+          <div id="foto-depois-preview" style="background:var(--bg3);border-radius:10px;height:160px;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="document.getElementById('inputDepois').click()">
+            <div style="text-align:center;color:var(--text3);font-size:13px">+ Foto</div>
+          </div>
+          <input type="file" id="inputDepois" accept="image/*" style="display:none" onchange="previewFoto(this,'foto-depois-preview','${userId}','depois')"/>
+        </div>
+      </div>
+    </div>
+    <div id="ct-info" style="display:none">
+      <div style="font-size:13px;color:var(--text2)">Em breve.</div>
+    </div>
+  </div>`;
+  loadFotosCliente(userId);
+}
+function switchClientTab(tab,btn){
+  document.querySelectorAll('#ap-clientes .pill-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  qs('ct-fotos').style.display=tab==='fotos'?'block':'none';
+  qs('ct-info').style.display=tab==='info'?'block':'none';
+}
+function previewFoto(input,previewId,userId,tipo){
+  const file=input.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    const b64=e.target.result;
+    qs(previewId).innerHTML=`<img src="${b64}" style="width:100%;height:160px;object-fit:cover;border-radius:10px"/>`;
+    const {data:ex}=await sb.from('client_photos').select('id').eq('user_id',userId).eq('tipo',tipo).single();
+    if(ex){await sb.from('client_photos').update({photo_b64:b64}).eq('id',ex.id);}
+    else{await sb.from('client_photos').insert({user_id:userId,tipo,photo_b64:b64});}
+    toast('Foto guardada! ✅');
+  };
+  reader.readAsDataURL(file);
+}
+async function loadFotosCliente(userId){
+  const {data}=await sb.from('client_photos').select('*').eq('user_id',userId);
+  if(!data||!data.length) return;
+  data.forEach(f=>{
+    const el=qs(f.tipo==='antes'?'foto-antes-preview':'foto-depois-preview');
+    if(el) el.innerHTML=`<img src="${f.photo_b64}" style="width:100%;height:160px;object-fit:cover;border-radius:10px"/>`;
+  });
 }
 
 // ── ADMIN PLANOS ──
