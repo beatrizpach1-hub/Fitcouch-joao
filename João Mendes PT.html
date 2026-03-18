@@ -262,28 +262,38 @@ input,select,textarea,button{font-family:var(--fb)}
         <button class="btn-main" id="btnLogin" onclick="doLogin()">Entrar →</button>
       </div>
       <div id="fReg" style="display:none">
-        <div class="field"><label>Código de convite</label><input type="text" id="rCode" placeholder="Código dado pelo teu PT" style="text-transform:uppercase;letter-spacing:2px"/></div>
-        <div class="field"><label>Nome completo</label><input type="text" id="rN" placeholder="Ex: Maria Silva"/></div>
-        <div class="field-row">
-          <div class="field"><label>Utilizador</label><input type="text" id="rU" placeholder="maria123"/></div>
-          <div class="field"><label>Password</label><input type="password" id="rP" placeholder="mínimo 6"/></div>
+        <div id="regStep1">
+          <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.5">Escreve o teu nome completo para verificarmos que és cliente do João Mendes.</div>
+          <div class="field"><label>Primeiro e último nome</label><input type="text" id="rName" placeholder="Ex: Maria Silva"/></div>
+          <div class="err" id="rErr"></div>
+          <button class="btn-main" id="btnFindClient" onclick="findClient()">Verificar →</button>
         </div>
-        <div class="field-row">
-          <div class="field"><label>Peso (kg)</label><input type="number" id="rW" placeholder="70" step="0.1"/></div>
-          <div class="field"><label>Altura (cm)</label><input type="number" id="rH" placeholder="165"/></div>
-        </div>
-        <div class="field">
-          <label>Objetivo: treinos por semana</label>
-          <div class="goal-chips" id="regGoalChips">
-            <div class="goal-chip" onclick="setGoal(2,this)">2×</div>
-            <div class="goal-chip selected" onclick="setGoal(3,this)">3×</div>
-            <div class="goal-chip" onclick="setGoal(4,this)">4×</div>
-            <div class="goal-chip" onclick="setGoal(5,this)">5×</div>
-            <div class="goal-chip" onclick="setGoal(6,this)">6×</div>
+        <div id="regStep2" style="display:none">
+          <div style="background:rgba(168,168,168,.1);border-radius:10px;padding:12px;margin-bottom:16px;font-size:14px;text-align:center">
+            Olá, <strong id="foundName"></strong>! 👋<br/>
+            <span style="font-size:12px;color:var(--text2)">Cria o teu acesso abaixo</span>
           </div>
+          <div class="field-row">
+            <div class="field"><label>Username</label><input type="text" id="rU" placeholder="maria123"/></div>
+            <div class="field"><label>Password</label><input type="password" id="rP" placeholder="mínimo 6"/></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Peso (kg)</label><input type="number" id="rW" placeholder="70" step="0.1"/></div>
+            <div class="field"><label>Altura (cm)</label><input type="number" id="rH" placeholder="165"/></div>
+          </div>
+          <div class="field">
+            <label>Objetivo: treinos por semana</label>
+            <div class="goal-chips" id="regGoalChips">
+              <div class="goal-chip" onclick="setGoal(2,this)">2×</div>
+              <div class="goal-chip selected" onclick="setGoal(3,this)">3×</div>
+              <div class="goal-chip" onclick="setGoal(4,this)">4×</div>
+              <div class="goal-chip" onclick="setGoal(5,this)">5×</div>
+              <div class="goal-chip" onclick="setGoal(6,this)">6×</div>
+            </div>
+          </div>
+          <div class="err" id="rErr2"></div>
+          <button class="btn-main" id="btnReg" onclick="doRegister()">Criar conta →</button>
         </div>
-        <div class="err" id="rErr"></div>
-        <button class="btn-main" id="btnReg" onclick="doRegister()">Criar conta →</button>
       </div>
     </div>
   </div>
@@ -467,27 +477,38 @@ async function doLogin(){
   CU=data; isAdmin=false; enterApp();
 }
 
-async function doRegister(){
-  const code=qs('rCode').value.trim().toUpperCase();
-  const name=qs('rN').value.trim(),user=qs('rU').value.trim(),pass=qs('rP').value;
-  const weight=parseFloat(qs('rW').value)||null, height=parseFloat(qs('rH').value)||null;
+let foundClientId = null;
+
+async function findClient(){
+  const name = qs('rName').value.trim();
   qs('rErr').textContent='';
-  if(!code){qs('rErr').textContent='Introduz o código de convite.';return;}
-  if(!name||!user||!pass){qs('rErr').textContent='Preenche todos os campos.';return;}
-  if(pass.length<6){qs('rErr').textContent='Password mínimo 6 caracteres.';return;}
-  const btn=qs('btnReg'); btn.disabled=true; btn.textContent='A verificar…';
-  // Check invite code
-  const {data:invite,error:invErr}=await sb.from('invite_codes').select('*').eq('code',code).eq('used',false).single();
-  if(invErr||!invite){qs('rErr').textContent='Código de convite inválido ou já utilizado.';btn.disabled=false;btn.textContent='Criar conta →';return;}
-  const {data:exists}=await sb.from('profiles').select('id').eq('username',user).single();
-  if(exists){qs('rErr').textContent='Username já existe.';btn.disabled=false;btn.textContent='Criar conta →';return;}
-  btn.textContent='A criar…';
-  const {data,error}=await sb.from('profiles').insert({username:user,password:pass,name,weight,height,week_goal:regGoal}).select().single();
-  if(error){qs('rErr').textContent='Erro ao criar conta. Tenta novamente.';console.error(error);btn.disabled=false;btn.textContent='Criar conta →';return;}
-  // Mark invite code as used
-  await sb.from('invite_codes').update({used:true,used_by:data.id,used_at:new Date().toISOString()}).eq('id',invite.id);
-  if(weight){ await sb.from('measurements').insert({user_id:data.id,date:today(),peso:weight,muscle_pct:null,fat_pct:null}); }
+  if(!name || name.split(' ').length < 2){qs('rErr').textContent='Escreve o primeiro e último nome.';return;}
+  const btn=qs('btnFindClient'); btn.disabled=true; btn.textContent='A verificar…';
+  // Search for pending client by name (case insensitive)
+  const {data,error}=await sb.from('profiles').select('*').ilike('name','%'+name+'%').eq('pending',true);
+  btn.disabled=false; btn.textContent='Verificar →';
+  if(error||!data||!data.length){qs('rErr').textContent='Nome não encontrado. Confirma com o João Mendes.';return;}
+  if(data.length > 1){qs('rErr').textContent='Encontrámos mais do que um cliente com esse nome. Contacta o João.';return;}
+  foundClientId = data[0].id;
+  qs('foundName').textContent = data[0].name.split(' ')[0];
+  qs('regStep1').style.display='none';
+  qs('regStep2').style.display='block';
+}
+
+async function doRegister(){
+  const user=qs('rU').value.trim(),pass=qs('rP').value;
+  const weight=parseFloat(qs('rW').value)||null,height=parseFloat(qs('rH').value)||null;
+  qs('rErr2').textContent='';
+  if(!user||!pass){qs('rErr2').textContent='Preenche username e password.';return;}
+  if(pass.length<6){qs('rErr2').textContent='Password mínimo 6 caracteres.';return;}
+  if(!foundClientId){qs('rErr2').textContent='Erro. Começa de novo.';return;}
+  const btn=qs('btnReg'); btn.disabled=true; btn.textContent='A criar…';
+  const {data:exists}=await sb.from('profiles').select('id').eq('username',user).neq('id',foundClientId).single();
+  if(exists){qs('rErr2').textContent='Username já existe. Escolhe outro.';btn.disabled=false;btn.textContent='Criar conta →';return;}
+  const {data,error}=await sb.from('profiles').update({username:user,password:pass,weight,height,week_goal:regGoal,pending:false}).eq('id',foundClientId).select().single();
   btn.disabled=false; btn.textContent='Criar conta →';
+  if(error){qs('rErr2').textContent='Erro ao criar conta.';console.error(error);return;}
+  if(weight){await sb.from('measurements').insert({user_id:data.id,date:today(),peso:weight});}
   CU=data; isAdmin=false; enterApp();
 }
 
@@ -574,6 +595,13 @@ async function loadDash(){
 
 // ── TREINOS ──
 function openAddTreino(){ qs('tDate').value=today(); openM('mTreino'); }
+async function deleteTreino(id){
+  if(!confirm('Eliminar este treino?')) return;
+  await sb.from('workouts').delete().eq('id',id);
+  toast('Treino eliminado!');
+  loadTreinosPage();
+  loadDash();
+}
 async function saveTreino(){
   const date=qs('tDate').value,type=qs('tType').value,desc=qs('tDesc').value.trim();
   const dur=parseInt(qs('tDur').value)||null, notes=qs('tNotes').value.trim();
@@ -626,11 +654,17 @@ async function loadPesoPage(){
     const prev=m[i+1];
     let diffEl='';
     if(prev){const d=(w.peso-prev.peso).toFixed(1);const cls=d<0?'wd-down':d>0?'wd-up':'wd-same';diffEl=`<span class="wt-diff ${cls}">${d>0?'+':''}${d}</span>`;}
-    return `<div class="wt-item"><div class="wt-date">${fmt(w.date)}</div><div class="wt-val">${w.peso.toFixed(1)} <span style="font-size:11px;color:var(--text2)">kg</span></div><div class="wt-extras">${w.muscle_pct?w.muscle_pct+'% m.':''}${w.fat_pct?'<br/>'+w.fat_pct+'% g.':''}</div>${diffEl}</div>`;
+    return `<div class="wt-item"><div class="wt-date">${fmt(w.date)}</div><div class="wt-val">${w.peso.toFixed(1)} <span style="font-size:11px;color:var(--text2)">kg</span></div><div class="wt-extras">${w.muscle_pct?w.muscle_pct+'% m.':''}${w.fat_pct?'<br/>'+w.fat_pct+'% g.':''}</div>${diffEl}<button onclick="deleteMedida('${w.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px;padding:4px">🗑</button></div>`;
   }).join(''):'<div class="empty"><div class="ei">⚖️</div><p>Sem registos ainda.</p></div>';
   el.innerHTML=topHtml+`<div class="card">${listHtml}</div>`;
   // FAB for peso page
   qs('cFab').onclick=()=>openM('mPeso');
+}
+async function deleteMedida(id){
+  if(!confirm('Eliminar este registo?')) return;
+  await sb.from('measurements').delete().eq('id',id);
+  toast('Registo eliminado!');
+  loadPesoPage();
 }
 async function savePeso(){
   const date=qs('pDate').value,peso=parseFloat(qs('pPeso').value);
@@ -709,19 +743,12 @@ async function loadAdminClientes(){
   const el=qs('ap-clientes');
   el.innerHTML=`<div class="card">
     <div class="section-title">Adicionar cliente</div>
-    <div class="field"><label>Nome</label><input type="text" id="acN" placeholder="Ex: Maria Silva"/></div>
-    <div class="form-row">
-      <div class="field"><label>Username</label><input type="text" id="acU" placeholder="maria123"/></div>
-      <div class="field"><label>Password</label><input type="password" id="acP" placeholder="password"/></div>
-    </div>
+    <div class="field"><label>Nome completo</label><input type="text" id="acN" placeholder="Ex: Maria Silva"/></div>
     <div class="form-row">
       <div class="field"><label>Peso (kg)</label><input type="number" id="acW" placeholder="70" step="0.1"/></div>
       <div class="field"><label>Altura (cm)</label><input type="number" id="acH" placeholder="165"/></div>
     </div>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <button class="btn-sm-acc" id="btnAddC" onclick="addClientDirect()" style="flex:2;padding:12px">Criar cliente</button>
-      <button class="btn-sm-ghost" onclick="genInviteInline()" style="flex:1;padding:12px">🔗 Convite</button>
-    </div>
+    <button class="btn-sm-acc" id="btnAddC" onclick="addClientDirect()" style="width:100%;padding:12px;margin-top:8px">Adicionar cliente</button>
     <div id="inviteResult" style="display:none;margin-top:12px;background:rgba(168,168,168,.08);border:1px solid rgba(168,168,168,.2);border-radius:10px;padding:14px;text-align:center">
       <div style="font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Código de convite</div>
       <div id="inviteCode" style="font-family:var(--fs);font-size:28px;font-weight:800;color:var(--acc);letter-spacing:4px"></div>
@@ -743,22 +770,29 @@ async function loadAdminClientes(){
     const pct=Math.min(100,Math.round(weekDone/goal*100));
     const bCls=pct>=100?'b-green':pct>=50?'b-orange':'b-red';
     const bTxt=pct>=100?'✓ Objetivo':pct>=50?'Em curso':'Abaixo';
-    return `<div class="client-row" onclick="openClientDetail('${u.id}','${u.name}')"><div class="c-av">${init}</div><div class="c-info"><div class="c-name">${u.name}<span class="badge ${bCls}">${bTxt}</span></div><div class="c-meta">${total} treinos · ${weekDone}/${goal} esta semana · Peso: ${u.weight?u.weight+' kg':'—'}</div></div><div style="color:var(--text3);font-size:18px">›</div></div>`;
+    return `<div style="display:flex;align-items:center;border-bottom:1px solid var(--bg3);padding:12px 0">
+      <div class="client-row" onclick="openClientDetail('${u.id}','${u.name}')" style="flex:1;border:none;padding:0">
+        <div class="c-av">${init}</div>
+        <div class="c-info"><div class="c-name">${u.name}<span class="badge ${bCls}">${bTxt}</span></div><div class="c-meta">${total} treinos · ${weekDone}/${goal} esta semana · Peso: ${u.weight?u.weight+' kg':'—'}</div></div>
+        <div style="color:var(--text3);font-size:18px">›</div>
+      </div>
+      <button onclick="deleteClient('${u.id}','${u.name}')" style="background:rgba(255,68,68,.1);border:none;border-radius:8px;padding:8px 10px;color:var(--red);cursor:pointer;font-size:16px;margin-left:8px;flex-shrink:0">🗑</button>
+    </div>`;
   }).join('');
 }
 
 async function addClientDirect(){
-  const name=qs('acN').value.trim(),user=qs('acU').value.trim(),pass=qs('acP').value;
+  const name=qs('acN').value.trim();
   const weight=parseFloat(qs('acW').value)||null,height=parseFloat(qs('acH').value)||null;
-  if(!name||!user||!pass){toast('Preenche nome, username e password');return;}
-  const btn=qs('btnAddC'); btn.disabled=true; btn.textContent='A criar…';
-  const {data:ex}=await sb.from('profiles').select('id').eq('username',user).single();
-  if(ex){toast('Username já existe!');btn.disabled=false;btn.textContent='Criar cliente';return;}
-  const {error}=await sb.from('profiles').insert({username:user,password:pass,name,weight,height,week_goal:3});
-  btn.disabled=false; btn.textContent='Criar cliente';
+  if(!name){toast('Escreve o nome do cliente');return;}
+  const btn=qs('btnAddC'); btn.disabled=true; btn.textContent='A adicionar…';
+  // Create profile without username/password - client will set it themselves
+  const tempUser='pending_'+Date.now();
+  const {error}=await sb.from('profiles').insert({username:tempUser,password:null,name,weight,height,week_goal:3,pending:true});
+  btn.disabled=false; btn.textContent='Adicionar cliente';
   if(error){toast('Erro ao criar.');console.error(error);return;}
-  qs('acN').value='';qs('acU').value='';qs('acP').value='';qs('acW').value='';qs('acH').value='';
-  toast('Cliente criado! ✅'); loadAdminClientes();
+  qs('acN').value='';if(qs('acW'))qs('acW').value='';if(qs('acH'))qs('acH').value='';
+  toast('Cliente adicionado! ✅'); loadAdminClientes();
 }
 async function genInviteInline(){
   const name=qs('acN').value.trim()||'Cliente';
@@ -768,17 +802,40 @@ async function genInviteInline(){
   qs('inviteResult').style.display='block';
   toast('Convite gerado! '+code);
 }
-async function openClientDetail(userId,userName){
+async function openClientDetail(userId, userName){
   const el=qs('ap-clientes');
-  el.innerHTML=`<div style="margin-bottom:14px"><button class="btn-sm-ghost" onclick="loadAdminClientes()">← Voltar</button></div>
-  <div class="card">
-    <div style="font-family:var(--fs);font-size:17px;font-weight:700;margin-bottom:14px">${userName}</div>
-    <div class="pill-tabs">
-      <div class="pill-tab active" onclick="switchClientTab('fotos',this)">Antes / Depois</div>
-      <div class="pill-tab" onclick="switchClientTab('info',this)">Info</div>
+  el.innerHTML=`
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+    <button class="btn-sm-ghost" onclick="loadAdminClientes()">← Voltar</button>
+    <div style="font-family:var(--fs);font-size:17px;font-weight:700;flex:1">${userName}</div>
+    <button class="btn-sm-ghost" style="color:var(--red);border-color:rgba(255,68,68,.3)" onclick="deleteClient('${userId}','${userName}')">Eliminar</button>
+  </div>
+  <div class="pill-tabs">
+    <div class="pill-tab active" onclick="switchCT('dados',this,'${userId}')">Dados</div>
+    <div class="pill-tab" onclick="switchCT('fotos',this,'${userId}')">Fotos</div>
+    <div class="pill-tab" onclick="switchCT('evolucao',this,'${userId}')">Evolução</div>
+  </div>
+  <div id="ct-dados">
+    <div class="card">
+      <div class="section-title">Registar medição</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Data: <input type="date" id="adDate" style="background:var(--bg3);border:none;border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;outline:none"/></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="field"><label>Peso (kg)</label><input type="number" id="adPeso" placeholder="75.0" step="0.1"/></div>
+        <div class="field"><label>Massa muscular (%)</label><input type="number" id="adMuscle" placeholder="40.0" step="0.1"/></div>
+        <div class="field"><label>Massa gorda (%)</label><input type="number" id="adFat" placeholder="18.0" step="0.1"/></div>
+        <div class="field"><label>% Água</label><input type="number" id="adWater" placeholder="55.0" step="0.1"/></div>
+        <div class="field"><label>Gordura visceral</label><input type="number" id="adVisceral" placeholder="8" step="0.1"/></div>
+        <div class="field"><label>Taxa metabólica (kcal)</label><input type="number" id="adMeta" placeholder="1800"/></div>
+        <div class="field"><label>IMC</label><input type="number" id="adImc" placeholder="24.5" step="0.1"/></div>
+        <div class="field"><label>Massa óssea (kg)</label><input type="number" id="adBone" placeholder="3.2" step="0.1"/></div>
+      </div>
+      <button class="btn-sm-acc" onclick="saveAdminMeasure('${userId}')" style="width:100%;padding:12px;margin-top:8px" id="btnSaveMeasure">Guardar medição</button>
     </div>
-    <div id="ct-fotos">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+    <div class="card" id="measureHistory"><div class="empty"><div class="ei">⏳</div><p>A carregar…</p></div></div>
+  </div>
+  <div id="ct-fotos" style="display:none">
+    <div class="card">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div>
           <div class="section-title">Antes</div>
           <div id="foto-antes-preview" style="background:var(--bg3);border-radius:10px;height:160px;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="document.getElementById('inputAntes').click()">
@@ -795,17 +852,126 @@ async function openClientDetail(userId,userName){
         </div>
       </div>
     </div>
-    <div id="ct-info" style="display:none">
-      <div style="font-size:13px;color:var(--text2)">Em breve.</div>
-    </div>
+  </div>
+  <div id="ct-evolucao" style="display:none">
+    <div class="card" id="evolucaoContent"><div class="empty"><div class="ei">⏳</div><p>A carregar…</p></div></div>
   </div>`;
+  qs('adDate').value=today();
+  loadAdminMeasureHistory(userId);
   loadFotosCliente(userId);
 }
-function switchClientTab(tab,btn){
+
+function switchCT(tab, btn, userId){
   document.querySelectorAll('#ap-clientes .pill-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
-  qs('ct-fotos').style.display=tab==='fotos'?'block':'none';
-  qs('ct-info').style.display=tab==='info'?'block':'none';
+  ['dados','fotos','evolucao'].forEach(t=>{ const el=qs('ct-'+t); if(el) el.style.display=t===tab?'block':'none'; });
+  if(tab==='evolucao') loadEvolucao(userId);
+}
+
+async function saveAdminMeasure(userId){
+  const date=qs('adDate').value;
+  const peso=parseFloat(qs('adPeso').value)||null;
+  const muscle=parseFloat(qs('adMuscle').value)||null;
+  const fat=parseFloat(qs('adFat').value)||null;
+  const water=parseFloat(qs('adWater').value)||null;
+  const visceral=parseFloat(qs('adVisceral').value)||null;
+  const meta=parseFloat(qs('adMeta').value)||null;
+  const imc=parseFloat(qs('adImc').value)||null;
+  const bone=parseFloat(qs('adBone').value)||null;
+  if(!date){toast('Seleciona a data');return;}
+  const btn=qs('btnSaveMeasure'); btn.disabled=true; btn.textContent='A guardar…';
+  const entry={user_id:userId,date,peso,muscle_pct:muscle,fat_pct:fat,water_pct:water,visceral_fat:visceral,metabolic_kcal:meta,imc,bone_mass:bone};
+  const {data:ex}=await sb.from('measurements').select('id').eq('user_id',userId).eq('date',date).single();
+  if(ex){ await sb.from('measurements').update(entry).eq('id',ex.id); }
+  else { await sb.from('measurements').insert(entry); }
+  // Update profile weight
+  if(peso) await sb.from('profiles').update({weight:peso}).eq('id',userId);
+  btn.disabled=false; btn.textContent='Guardar medição';
+  toast('Medição guardada! ✅');
+  loadAdminMeasureHistory(userId);
+}
+
+async function loadAdminMeasureHistory(userId){
+  const el=qs('measureHistory'); if(!el) return;
+  const {data}=await sb.from('measurements').select('*').eq('user_id',userId).order('date',{ascending:false}).limit(12);
+  if(!data||!data.length){el.innerHTML='<div class="empty"><div class="ei">📊</div><p>Sem medições ainda.</p></div>';return;}
+  el.innerHTML='<div class="section-title">Histórico de medições</div>'+data.map((m,i)=>{
+    const prev=data[i+1];
+    const diffPeso=prev&&m.peso&&prev.peso?(m.peso-prev.peso).toFixed(1):null;
+    const diffCls=diffPeso<0?'wd-down':diffPeso>0?'wd-up':'';
+    return `<div style="padding:12px 0;border-bottom:1px solid var(--bg3)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:13px;font-weight:500">${fmt(m.date)}</div>
+        ${diffPeso!==null?`<span class="wt-diff ${diffCls}">${diffPeso>0?'+':''}${diffPeso} kg</span>`:''}
+        <button class="rm-btn" onclick="deleteMeasure('${m.id}','${userId}')" style="font-size:14px">×</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+        ${m.peso?`<div style="background:var(--bg3);border-radius:8px;padding:8px;text-align:center"><div style="font-size:10px;color:var(--text2)">Peso</div><div style="font-size:14px;font-weight:600">${m.peso}</div></div>`:''}
+        ${m.muscle_pct?`<div style="background:var(--bg3);border-radius:8px;padding:8px;text-align:center"><div style="font-size:10px;color:var(--text2)">Muscular</div><div style="font-size:14px;font-weight:600">${m.muscle_pct}%</div></div>`:''}
+        ${m.fat_pct?`<div style="background:var(--bg3);border-radius:8px;padding:8px;text-align:center"><div style="font-size:10px;color:var(--text2)">Gordura</div><div style="font-size:14px;font-weight:600">${m.fat_pct}%</div></div>`:''}
+        ${m.water_pct?`<div style="background:var(--bg3);border-radius:8px;padding:8px;text-align:center"><div style="font-size:10px;color:var(--text2)">Água</div><div style="font-size:14px;font-weight:600">${m.water_pct}%</div></div>`:''}
+        ${m.visceral_fat?`<div style="background:var(--bg3);border-radius:8px;padding:8px;text-align:center"><div style="font-size:10px;color:var(--text2)">Visceral</div><div style="font-size:14px;font-weight:600">${m.visceral_fat}</div></div>`:''}
+        ${m.metabolic_kcal?`<div style="background:var(--bg3);border-radius:8px;padding:8px;text-align:center"><div style="font-size:10px;color:var(--text2)">Metab.</div><div style="font-size:14px;font-weight:600">${m.metabolic_kcal}</div></div>`:''}
+        ${m.imc?`<div style="background:var(--bg3);border-radius:8px;padding:8px;text-align:center"><div style="font-size:10px;color:var(--text2)">IMC</div><div style="font-size:14px;font-weight:600">${m.imc}</div></div>`:''}
+        ${m.bone_mass?`<div style="background:var(--bg3);border-radius:8px;padding:8px;text-align:center"><div style="font-size:10px;color:var(--text2)">Óssea</div><div style="font-size:14px;font-weight:600">${m.bone_mass}</div></div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function deleteMeasure(measureId, userId){
+  await sb.from('measurements').delete().eq('id',measureId);
+  toast('Medição eliminada.');
+  loadAdminMeasureHistory(userId);
+}
+
+async function deleteClient(userId, userName){
+  if(!confirm('Tens a certeza que queres eliminar '+userName+'?
+Todos os dados serão apagados.')) return;
+  await sb.from('workouts').delete().eq('user_id',userId);
+  await sb.from('measurements').delete().eq('user_id',userId);
+  await sb.from('training_plans').delete().eq('user_id',userId);
+  await sb.from('meal_plans').delete().eq('user_id',userId);
+  await sb.from('client_photos').delete().eq('user_id',userId);
+  await sb.from('profiles').delete().eq('id',userId);
+  toast(userName+' eliminado.');
+  loadAdminClientes();
+}
+
+async function loadEvolucao(userId){
+  const el=qs('evolucaoContent'); if(!el) return;
+  const {data}=await sb.from('measurements').select('*').eq('user_id',userId).order('date',{ascending:true});
+  if(!data||data.length<2){el.innerHTML='<div class="empty"><div class="ei">📈</div><p>Precisas de pelo menos 2 medições para ver a evolução.</p></div>';return;}
+  const first=data[0], last=data[data.length-1];
+  const fields=[
+    {key:'peso',label:'Peso',unit:'kg',good:'down'},
+    {key:'fat_pct',label:'Gordura',unit:'%',good:'down'},
+    {key:'muscle_pct',label:'Muscular',unit:'%',good:'up'},
+    {key:'water_pct',label:'Água',unit:'%',good:'up'},
+    {key:'visceral_fat',label:'Gordura visceral',unit:'',good:'down'},
+    {key:'metabolic_kcal',label:'Taxa metabólica',unit:'kcal',good:'up'},
+    {key:'imc',label:'IMC',unit:'',good:'down'},
+    {key:'bone_mass',label:'Massa óssea',unit:'kg',good:'up'},
+  ];
+  el.innerHTML='<div class="section-title">Evolução total ('+fmt(first.date)+' → '+fmt(last.date)+')</div>'+
+  fields.filter(f=>first[f.key]&&last[f.key]).map(f=>{
+    const diff=(last[f.key]-first[f.key]);
+    const diffStr=(diff>0?'+':'')+diff.toFixed(1)+' '+f.unit;
+    const isGood=(f.good==='down'&&diff<0)||(f.good==='up'&&diff>0);
+    const isNeutral=diff===0;
+    const cls=isNeutral?'wd-same':isGood?'wd-down':'wd-up';
+    const icon=isNeutral?'→':isGood?'↓ Melhorou':'↑ Piorou';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--bg3)">
+      <div>
+        <div style="font-size:13px;font-weight:500">${f.label}</div>
+        <div style="font-size:12px;color:var(--text2)">${first[f.key]}${f.unit} → ${last[f.key]}${f.unit}</div>
+      </div>
+      <div style="text-align:right">
+        <span class="wt-diff ${cls}">${diffStr}</span>
+        <div style="font-size:10px;color:var(--text2);margin-top:3px">${icon}</div>
+      </div>
+    </div>`;
+  }).join('');
 }
 function previewFoto(input,previewId,userId,tipo){
   const file=input.files[0]; if(!file) return;
@@ -819,6 +985,17 @@ function previewFoto(input,previewId,userId,tipo){
     toast('Foto guardada! ✅');
   };
   reader.readAsDataURL(file);
+}
+async function deleteClient(userId, userName){
+  if(!confirm('Tens a certeza que queres eliminar ' + userName + '? Esta ação é irreversível e apaga todos os dados do cliente.')) return;
+  await sb.from('workouts').delete().eq('user_id',userId);
+  await sb.from('measurements').delete().eq('user_id',userId);
+  await sb.from('training_plans').delete().eq('user_id',userId);
+  await sb.from('meal_plans').delete().eq('user_id',userId);
+  await sb.from('client_photos').delete().eq('user_id',userId);
+  await sb.from('profiles').delete().eq('id',userId);
+  toast('Cliente eliminado!');
+  loadAdminClientes();
 }
 async function loadFotosCliente(userId){
   const {data}=await sb.from('client_photos').select('*').eq('user_id',userId);
