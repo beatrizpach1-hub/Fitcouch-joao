@@ -235,13 +235,13 @@ input,select,textarea,button{font-family:inherit}
         <div class="tab on" id="tL" onclick="stab('login')">Entrar</div>
         <div class="tab" id="tR" onclick="stab('reg')">Registar</div>
       </div>
-      <div id="fL" autocomplete="on">
+      <form id="fL" onsubmit="doLogin();return false;" autocomplete="on">
         <div class="f"><label>Utilizador</label><input type="text" id="lU" placeholder="username" autocomplete="username" name="username"/></div>
         <div class="f"><label>Password</label><div style="position:relative"><input type="password" id="lP" placeholder="••••••••" autocomplete="current-password" style="padding-right:44px"/><button onclick="togglePwd('lP',this)" type="button" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text2);cursor:pointer;font-size:16px;padding:4px">👁</button></div></div>
         <div class="err" id="lE"></div>
         <button class="bmain" id="bL" onclick="doLogin()">Entrar →</button>
         
-        </div><div style="text-align:center;margin-top:8px"><button onclick="showReset()" style="background:none;border:none;color:var(--text2);font-size:12px;cursor:pointer;text-decoration:underline">Esqueci a password</button></div>
+        </form><div style="text-align:center;margin-top:8px"><button onclick="showReset()" style="background:none;border:none;color:var(--text2);font-size:12px;cursor:pointer;text-decoration:underline">Esqueci a password</button></div>
         <div id="resetBox" style="display:none;margin-top:12px;background:var(--bg3);border-radius:10px;padding:14px">
           <div class="f"><label>O teu username</label><input type="text" id="resetU" placeholder="username"/></div>
           <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5">Pede ao teu PT para repor a password no Supabase, ou usa o botão abaixo para contactar.</div>
@@ -292,7 +292,7 @@ input,select,textarea,button{font-family:inherit}
     <div class="av" id="cAv">?</div>
   </div>
   <div style="flex:1;overflow:hidden;position:relative">
-    <div class="mc scroll" id="p-dash" style="position:absolute;inset:0;overflow-y:auto;display:none"></div>
+    <div class="mc scroll" id="p-dash" style="position:absolute;inset:0;overflow-y:auto"></div>
     <div class="mc scroll" id="p-tr" style="position:absolute;inset:0;overflow-y:auto;display:none"></div>
     <div class="mc scroll" id="p-pl" style="position:absolute;inset:0;overflow-y:auto;display:none"></div>
     <div class="mc scroll" id="p-pe" style="position:absolute;inset:0;overflow-y:auto;display:none"></div>
@@ -311,7 +311,7 @@ input,select,textarea,button{font-family:inherit}
 </div>
 
 <!-- ADMIN APP -->
-<div class="screen" id="aa" style="position:relative;height:100vh;max-height:100vh">
+<div class="screen" id="aa" style="position:relative">
   <div class="tb">
     <div style="line-height:1.2">
       <div style="font-size:14px;font-weight:300;letter-spacing:3px">JOÃO MENDES</div>
@@ -512,13 +512,11 @@ async function doLogin(){
   qs('lE').textContent='';
   if(!u||!p){qs('lE').textContent='Preenche os campos.';return;}
   const b=qs('bL');b.disabled=true;b.textContent='A entrar…';
-  try{
-    if(u.toLowerCase()==='admin'&&p==='joaomendes2024'){CU={username:'admin',name:'João Mendes',is_admin:true,week_goal:0};isA=true;enterApp();b.disabled=false;b.textContent='Entrar →';return;}
-    const {data,error}=await sb.from('profiles').select('*').eq('username',u).eq('password',p).single();
-    if(error||!data){qs('lE').textContent='Utilizador ou password incorretos.';}
-    else{CU=data;isA=false;enterApp();}
-  }catch(e){qs('lE').textContent='Erro de ligação. Tenta novamente.';}
+  if(u.toLowerCase()==='admin'&&p==='joaomendes2024'){CU={username:'admin',name:'João Mendes',is_admin:true,week_goal:0};isA=true;enterApp();b.disabled=false;b.textContent='Entrar →';return;}
+  const {data,error}=await sb.from('profiles').select('*').eq('username',u).eq('password',p).single();
   b.disabled=false;b.textContent='Entrar →';
+  if(error||!data){qs('lE').textContent='Utilizador ou password incorretos.';return;}
+  CU=data;isA=false;enterApp();
 }
 
 async function srchName(){
@@ -547,25 +545,11 @@ async function doReg(){
 function logout(){CU=null;isA=false;showScr('as');qs('lU').value='';qs('lP').value='';}
 
 function enterApp(){
-  if(isA){
-    showScr('aa');
-    ['ap-cl','ap-pl','ap-nu'].forEach(id=>{const el=qs(id);if(el)el.style.display='none';});
-    const apCl=qs('ap-cl');if(apCl)apCl.style.display='block';
-    document.querySelectorAll('#aa .nb').forEach(b=>b.classList.remove('on'));
-    const aBtn=document.querySelector('#aa .nb[data-p="cl"]');if(aBtn)aBtn.classList.add('on');
-    loadACl();
-  }
+  if(isA){showScr('aa');loadACl();}
   else{
     showScr('ca');
     qs('cAv').textContent=CU.name.split(' ').slice(0,2).map(n=>n[0]).join('').toUpperCase();
     qs('tD').value=td();qs('pD').value=td();
-    ['p-dash','p-tr','p-pl','p-pe','p-nu','p-di'].forEach(id=>{const el=qs(id);if(el)el.style.display='none';});
-    const dash=qs('p-dash');if(dash)dash.style.display='block';
-    document.querySelectorAll('#ca .nb').forEach(b=>b.classList.remove('on'));
-    const cBtn=document.querySelector('#ca .nb[data-p="dash"]');if(cBtn)cBtn.classList.add('on');
-    qs('cT').textContent='Inicio';
-    qs('fab').style.display='flex';
-    qs('fab').onclick=()=>oTr();
     loadDash();
   }
 }
@@ -735,6 +719,16 @@ async function loadNu(){
   else{
     let pHtml='<div class="card"><div class="st">O teu plano alimentar</div>';
     if(pa.content)pHtml+='<div style="font-size:14px;color:var(--text2);line-height:1.7;white-space:pre-wrap;margin-bottom:12px">'+pa.content+'</div>';
+    if(pa.file_data&&pa.file_name){
+      if(pa.file_type&&pa.file_type.startsWith('image')){
+        pHtml+='<img src="'+pa.file_data+'" style="width:100%;border-radius:10px"/>';
+      } else {
+        pHtml+='<div style="margin-top:10px"><div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Ficheiro anexado</div>';
+        pHtml+='<a href="'+pa.file_data+'" target="_blank" style="display:flex;align-items:center;gap:12px;background:var(--bg3);border-radius:12px;padding:14px;text-decoration:none;color:var(--text)">';
+        pHtml+='<div style="width:40px;height:40px;background:var(--bg4);border-radius:8px;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>';
+        pHtml+='<div><div style="font-size:14px;font-weight:600;margin-bottom:2px">'+pa.file_name+'</div><div style="font-size:12px;color:var(--acc)">Toca para abrir</div></div></a></div>';
+      }
+    }
     pHtml+='</div>';
     pEl.innerHTML=pHtml;
   }
@@ -921,7 +915,7 @@ async function loadAPl(){
   const {data:users}=await sb.from('profiles').select('id,name').eq('is_admin',false).order('name');
   if(!users||!users.length){el.innerHTML='<div class="em"><div class="ei" style="color:var(--text3)"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg></div><p>Adiciona clientes primeiro.</p></div>';return;}
   const opts=users.map(u=>'<option value="'+u.id+'">'+u.name+'</option>').join('');
-  const uploadHtml='';
+  const uploadHtml='<div style="margin-top:10px;margin-bottom:8px"><label style="display:block;font-size:11px;font-weight:500;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em">Anexar PDF/ficheiro (opcional)</label><label style="display:flex;align-items:center;gap:10px;border:1.5px dashed var(--bg4);border-radius:10px;padding:12px;cursor:pointer;color:var(--text2);font-size:13px">&#128206; Selecionar ficheiro<input type="file" id="plFile" accept=".pdf,.doc,.docx,.txt,image/*" style="display:none" onchange="handlePlFile(this)"/><span id="plFileName" style="color:var(--acc);font-size:12px"></span></label></div>';
   el.innerHTML='<div class="card"><div class="f"><label>Cliente</label><select id="pSel" onchange="loadPE()">'+opts+'</select></div><div id="pEd"></div>'+uploadHtml+'<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="bsg" onclick="addPD()">+ Dia</button><button class="bsa" id="bSPl" onclick="savePl()">Guardar plano</button></div></div>';
   loadPE();
 }
@@ -939,11 +933,12 @@ async function savePl(){
   const cid=qs('pSel').value;if(!cid)return;
   const b=qs('bSPl');b.disabled=true;
   const payload={days:pDays,updated_at:new Date().toISOString()};
-
+  if(plFileData){payload.file_data=plFileData;payload.file_name=plFileName2;payload.file_type=plFileType;}
   const {data:ex}=await sb.from('training_plans').select('id').eq('user_id',cid).single();
   if(ex&&ex.id)await sb.from('training_plans').update(payload).eq('id',ex.id);
   else await sb.from('training_plans').insert({user_id:cid,...payload});
-  b.disabled=false;
+  b.disabled=false;plFileData=null;plFileName2=null;
+  if(qs('plFileName'))qs('plFileName').textContent='';
   toast('Plano guardado! ✅');
 }
 
@@ -954,7 +949,7 @@ async function loadANu(){
   const uO=(users||[]).map(u=>'<option value="'+u.id+'">'+u.name+'</option>').join('');
   el.innerHTML='<div class="pt"><div class="ptt on" onclick="swANT(\'dc\',this)">Dicas gerais</div><div class="ptt" onclick="swANT(\'pa\',this)">Plano alimentar</div></div>'+
   '<div id="an-dc"><div class="card"><div class="f"><label>Título</label><input type="text" id="dTi" placeholder="Ex: Hidratação"/></div><div class="f"><label>Conteúdo</label><textarea class="ta" id="dBo" placeholder="Conteúdo…"></textarea></div><button class="bsa" id="bPD" onclick="pubD()" style="width:100%;padding:12px">Publicar dica</button></div><div class="card"><div class="st">Publicadas</div><div id="dL"></div></div></div>'+
-  '<div id="an-pa" style="display:none"><div class="card"><div class="f"><label>Cliente</label><select id="pAS">'+uO+'</select></div><div class="f"><label>Plano alimentar (texto)</label><textarea class="ta" id="pAC" placeholder="Escreve ou anexa ficheiro abaixo…" style="min-height:80px"></textarea></div><button class="bsa" id="bSPA" onclick="savePA()" style="width:100%;padding:12px">Guardar</button></div></div>';
+  '<div id="an-pa" style="display:none"><div class="card"><div class="f"><label>Cliente</label><select id="pAS">'+uO+'</select></div><div class="f"><label>Plano alimentar (texto)</label><textarea class="ta" id="pAC" placeholder="Escreve ou anexa ficheiro abaixo…" style="min-height:80px"></textarea></div><div style="margin-bottom:10px"><label style="display:block;font-size:11px;font-weight:500;color:var(--text2);margin-bottom:5px;text-transform:uppercase">Ou anexa PDF/ficheiro</label><label style="display:flex;align-items:center;gap:10px;border:1.5px dashed var(--bg4);border-radius:10px;padding:12px;cursor:pointer;color:var(--text2);font-size:13px">&#128206; Selecionar ficheiro<input type="file" id="pAFile" accept=".pdf,.doc,.docx,.txt,image/*" style="display:none" onchange="handlePAFile(this)"/><span id="pAFileName" style="color:var(--acc);font-size:12px"></span></label></div><button class="bsa" id="bSPA" onclick="savePA()" style="width:100%;padding:12px">Guardar</button></div></div>';
   loadDicas();
 }
 async function loadDicas(){
@@ -977,11 +972,12 @@ async function savePA(){
   if(!uid&&!pAFileData){toast('Seleciona cliente e adiciona conteúdo');return;}
   const b=qs('bSPA');b.disabled=true;
   const payload={user_id:uid,content:content||''};
-
+  if(pAFileData){payload.file_data=pAFileData;payload.file_name=pAFileName2;payload.file_type=pAFileType;}
   const {data:ex}=await sb.from('meal_plans').select('id').eq('user_id',uid).single();
   if(ex&&ex.id)await sb.from('meal_plans').update({...payload,updated_at:new Date().toISOString()}).eq('id',ex.id);
   else await sb.from('meal_plans').insert(payload);
-  b.disabled=false;if(qs('pAC'))qs('pAC').value='';
+  b.disabled=false;if(qs('pAC'))qs('pAC').value='';pAFileData=null;pAFileName2=null;
+  if(qs('pAFileName'))qs('pAFileName').textContent='';
   toast('Plano alimentar guardado! ✅');
 }
 function swANT(t,btn){
@@ -989,10 +985,21 @@ function swANT(t,btn){
   qs('an-dc').style.display=t==='dc'?'block':'none';qs('an-pa').style.display=t==='pa'?'block':'none';
 }
 
-qs('lP').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();doLogin();}});
-qs('lU').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();doLogin();}});
+qs('lP').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 
-
+function openPDF(encodedData){
+  const data = decodeURIComponent(encodedData);
+  const w = window.open('');
+  if(w){
+    w.document.write('<html><body style="margin:0;background:#000"><iframe src="'+data+'" width="100%" height="100%" style="border:none;position:fixed;inset:0"></iframe></body></html>');
+    w.document.close();
+  } else {
+    const a=document.createElement('a');
+    a.href=data;
+    a.target='_blank';
+    a.click();
+  }
+}
 
 const mealIcons={'pequeno-almoco':'☀️','almoco':'🍽️','lanche':'🍎','jantar':'🌙','snack':'🥜'};
 function selMeal(type, el){
@@ -1255,7 +1262,8 @@ function copyResetInfo(){
 }
 
 // ── CONVITE ──
-
+let pAFileData=null,pAFileName2=null,pAFileType=null;
+let plFileData=null,plFileName2=null,plFileType=null;
 
 async function genConvite(){
   const name=qs('acN')?.value.trim()||'Cliente';
@@ -1266,7 +1274,22 @@ async function genConvite(){
   toast('Convite gerado: '+code);
 }
 
+// ── FILE HANDLERS ──
+function handlePAFile(input){
+  const file=input.files[0];if(!file)return;
+  qs('pAFileName').textContent='📎 '+file.name;
+  const reader=new FileReader();
+  reader.onload=e=>{pAFileData=e.target.result;pAFileName2=file.name;pAFileType=file.type;};
+  reader.readAsDataURL(file);
+}
 
+function handlePlFile(input){
+  const file=input.files[0];if(!file)return;
+  qs('plFileName').textContent='📎 '+file.name;
+  const reader=new FileReader();
+  reader.onload=e=>{plFileData=e.target.result;plFileName2=file.name;plFileType=file.type;};
+  reader.readAsDataURL(file);
+}
 
 
 </script>
