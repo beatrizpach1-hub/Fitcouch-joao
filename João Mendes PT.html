@@ -235,13 +235,13 @@ input,select,textarea,button{font-family:inherit}
         <div class="tab on" id="tL" onclick="stab('login')">Entrar</div>
         <div class="tab" id="tR" onclick="stab('reg')">Registar</div>
       </div>
-      <div id="fL">
-        <div class="f"><label>Utilizador</label><input type="text" id="lU" placeholder="username" autocomplete="username"/></div>
+      <form id="fL" onsubmit="doLogin();return false;" autocomplete="on">
+        <div class="f"><label>Utilizador</label><input type="text" id="lU" placeholder="username" autocomplete="username" name="username"/></div>
         <div class="f"><label>Password</label><div style="position:relative"><input type="password" id="lP" placeholder="••••••••" autocomplete="current-password" style="padding-right:44px"/><button onclick="togglePwd('lP',this)" type="button" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text2);cursor:pointer;font-size:16px;padding:4px">👁</button></div></div>
         <div class="err" id="lE"></div>
         <button class="bmain" id="bL" onclick="doLogin()">Entrar →</button>
         
-        <div style="text-align:center;margin-top:8px"><button onclick="showReset()" style="background:none;border:none;color:var(--text2);font-size:12px;cursor:pointer;text-decoration:underline">Esqueci a password</button></div>
+        </form><div style="text-align:center;margin-top:8px"><button onclick="showReset()" style="background:none;border:none;color:var(--text2);font-size:12px;cursor:pointer;text-decoration:underline">Esqueci a password</button></div>
         <div id="resetBox" style="display:none;margin-top:12px;background:var(--bg3);border-radius:10px;padding:14px">
           <div class="f"><label>O teu username</label><input type="text" id="resetU" placeholder="username"/></div>
           <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5">Pede ao teu PT para repor a password no Supabase, ou usa o botão abaixo para contactar.</div>
@@ -723,7 +723,10 @@ async function loadNu(){
       if(pa.file_type&&pa.file_type.startsWith('image')){
         pHtml+='<img src="'+pa.file_data+'" style="width:100%;border-radius:10px"/>';
       } else {
-        pHtml+='<a href="'+pa.file_data+'" download="'+pa.file_name+'" style="display:flex;align-items:center;gap:10px;background:var(--bg3);border-radius:10px;padding:12px;text-decoration:none;color:var(--text)">'+'<div style="font-size:24px">📄</div><div><div style="font-size:14px;font-weight:500">'+pa.file_name+'</div><div style="font-size:12px;color:var(--text2)">Clica para descarregar</div></div></a>';
+        pHtml+='<div style="margin-top:10px"><div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Ficheiro anexado</div>';
+        pHtml+='<a href="'+pa.file_data+'" target="_blank" style="display:flex;align-items:center;gap:12px;background:var(--bg3);border-radius:12px;padding:14px;text-decoration:none;color:var(--text)">';
+        pHtml+='<div style="width:40px;height:40px;background:var(--bg4);border-radius:8px;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>';
+        pHtml+='<div><div style="font-size:14px;font-weight:600;margin-bottom:2px">'+pa.file_name+'</div><div style="font-size:12px;color:var(--acc)">Toca para abrir</div></div></a></div>';
       }
     }
     pHtml+='</div>';
@@ -983,6 +986,20 @@ function swANT(t,btn){
 }
 
 qs('lP').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
+function openPDF(encodedData){
+  const data = decodeURIComponent(encodedData);
+  const w = window.open('');
+  if(w){
+    w.document.write('<html><body style="margin:0;background:#000"><iframe src="'+data+'" width="100%" height="100%" style="border:none;position:fixed;inset:0"></iframe></body></html>');
+    w.document.close();
+  } else {
+    const a=document.createElement('a');
+    a.href=data;
+    a.target='_blank';
+    a.click();
+  }
+}
 
 const mealIcons={'pequeno-almoco':'☀️','almoco':'🍽️','lanche':'🍎','jantar':'🌙','snack':'🥜'};
 function selMeal(type, el){
