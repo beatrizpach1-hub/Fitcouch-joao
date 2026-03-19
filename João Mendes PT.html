@@ -292,7 +292,7 @@ input,select,textarea,button{font-family:inherit}
     <div class="av" id="cAv">?</div>
   </div>
   <div style="flex:1;overflow:hidden;position:relative">
-    <div class="mc scroll" id="p-dash" style="position:absolute;inset:0;overflow-y:auto"></div>
+    <div class="mc scroll" id="p-dash" style="position:absolute;inset:0;overflow-y:auto;display:none"></div>
     <div class="mc scroll" id="p-tr" style="position:absolute;inset:0;overflow-y:auto;display:none"></div>
     <div class="mc scroll" id="p-pl" style="position:absolute;inset:0;overflow-y:auto;display:none"></div>
     <div class="mc scroll" id="p-pe" style="position:absolute;inset:0;overflow-y:auto;display:none"></div>
@@ -547,11 +547,25 @@ async function doReg(){
 function logout(){CU=null;isA=false;showScr('as');qs('lU').value='';qs('lP').value='';}
 
 function enterApp(){
-  if(isA){showScr('aa');loadACl();}
+  if(isA){
+    showScr('aa');
+    ['ap-cl','ap-pl','ap-nu'].forEach(id=>{const el=qs(id);if(el)el.style.display='none';});
+    const apCl=qs('ap-cl');if(apCl)apCl.style.display='block';
+    document.querySelectorAll('#aa .nb').forEach(b=>b.classList.remove('on'));
+    const aBtn=document.querySelector('#aa .nb[data-p="cl"]');if(aBtn)aBtn.classList.add('on');
+    loadACl();
+  }
   else{
     showScr('ca');
     qs('cAv').textContent=CU.name.split(' ').slice(0,2).map(n=>n[0]).join('').toUpperCase();
     qs('tD').value=td();qs('pD').value=td();
+    ['p-dash','p-tr','p-pl','p-pe','p-nu','p-di'].forEach(id=>{const el=qs(id);if(el)el.style.display='none';});
+    const dash=qs('p-dash');if(dash)dash.style.display='block';
+    document.querySelectorAll('#ca .nb').forEach(b=>b.classList.remove('on'));
+    const cBtn=document.querySelector('#ca .nb[data-p="dash"]');if(cBtn)cBtn.classList.add('on');
+    qs('cT').textContent='Inicio';
+    qs('fab').style.display='flex';
+    qs('fab').onclick=()=>oTr();
     loadDash();
   }
 }
