@@ -235,13 +235,13 @@ input,select,textarea,button{font-family:inherit}
         <div class="tab on" id="tL" onclick="stab('login')">Entrar</div>
         <div class="tab" id="tR" onclick="stab('reg')">Registar</div>
       </div>
-      <form id="fL" onsubmit="doLogin();return false;" autocomplete="on">
+      <div id="fL" autocomplete="on">
         <div class="f"><label>Utilizador</label><input type="text" id="lU" placeholder="username" autocomplete="username" name="username"/></div>
         <div class="f"><label>Password</label><div style="position:relative"><input type="password" id="lP" placeholder="••••••••" autocomplete="current-password" style="padding-right:44px"/><button onclick="togglePwd('lP',this)" type="button" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text2);cursor:pointer;font-size:16px;padding:4px">👁</button></div></div>
         <div class="err" id="lE"></div>
         <button class="bmain" id="bL" onclick="doLogin()">Entrar →</button>
         
-        </form><div style="text-align:center;margin-top:8px"><button onclick="showReset()" style="background:none;border:none;color:var(--text2);font-size:12px;cursor:pointer;text-decoration:underline">Esqueci a password</button></div>
+        </div><div style="text-align:center;margin-top:8px"><button onclick="showReset()" style="background:none;border:none;color:var(--text2);font-size:12px;cursor:pointer;text-decoration:underline">Esqueci a password</button></div>
         <div id="resetBox" style="display:none;margin-top:12px;background:var(--bg3);border-radius:10px;padding:14px">
           <div class="f"><label>O teu username</label><input type="text" id="resetU" placeholder="username"/></div>
           <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5">Pede ao teu PT para repor a password no Supabase, ou usa o botão abaixo para contactar.</div>
@@ -292,12 +292,12 @@ input,select,textarea,button{font-family:inherit}
     <div class="av" id="cAv">?</div>
   </div>
   <div style="flex:1;overflow:hidden;position:relative">
-    <div class="mc scroll on" id="p-dash" style="position:absolute;inset:0"></div>
-    <div class="mc scroll" id="p-tr" style="position:absolute;inset:0;display:none"></div>
-    <div class="mc scroll" id="p-pl" style="position:absolute;inset:0;display:none"></div>
-    <div class="mc scroll" id="p-pe" style="position:absolute;inset:0;display:none"></div>
-    <div class="mc scroll" id="p-nu" style="position:absolute;inset:0;display:none"></div>
-    <div class="mc scroll" id="p-di" style="position:absolute;inset:0;display:none"></div>
+    <div class="mc scroll" id="p-dash" style="position:absolute;inset:0;overflow-y:auto"></div>
+    <div class="mc scroll" id="p-tr" style="position:absolute;inset:0;overflow-y:auto;display:none"></div>
+    <div class="mc scroll" id="p-pl" style="position:absolute;inset:0;overflow-y:auto;display:none"></div>
+    <div class="mc scroll" id="p-pe" style="position:absolute;inset:0;overflow-y:auto;display:none"></div>
+    <div class="mc scroll" id="p-nu" style="position:absolute;inset:0;overflow-y:auto;display:none"></div>
+    <div class="mc scroll" id="p-di" style="position:absolute;inset:0;overflow-y:auto;display:none"></div>
   </div>
   <div class="bn">
     <button class="nb on" data-p="dash" onclick="cNav('dash',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Início</span></button>
@@ -319,10 +319,10 @@ input,select,textarea,button{font-family:inherit}
     </div>
     <button class="ib" onclick="logout()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
   </div>
-  <div style="flex:1;overflow:hidden;position:relative;-webkit-overflow-scrolling:touch">
-    <div class="mc scroll on" id="ap-cl" style="position:absolute;inset:0;overflow-y:auto"></div>
-    <div class="mc scroll" id="ap-pl" style="position:absolute;inset:0;display:none;overflow-y:auto"></div>
-    <div class="mc scroll" id="ap-nu" style="position:absolute;inset:0;display:none;overflow-y:auto"></div>
+  <div style="flex:1;overflow:hidden;position:relative">
+    <div class="mc scroll" id="ap-cl" style="position:absolute;inset:0;overflow-y:auto"></div>
+    <div class="mc scroll" id="ap-pl" style="position:absolute;inset:0;overflow-y:auto;display:none"></div>
+    <div class="mc scroll" id="ap-nu" style="position:absolute;inset:0;overflow-y:auto;display:none"></div>
   </div>
   <div class="bn" style="flex-shrink:0;min-height:60px">
     <button class="nb on" data-p="cl" onclick="aN('cl',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75"/><path d="M21 21v-2a4 4 0 00-3-3.85"/></svg><span>Clientes</span></button>
@@ -512,11 +512,13 @@ async function doLogin(){
   qs('lE').textContent='';
   if(!u||!p){qs('lE').textContent='Preenche os campos.';return;}
   const b=qs('bL');b.disabled=true;b.textContent='A entrar…';
-  if(u.toLowerCase()==='admin'&&p==='joaomendes2024'){CU={username:'admin',name:'João Mendes',is_admin:true,week_goal:0};isA=true;enterApp();b.disabled=false;b.textContent='Entrar →';return;}
-  const {data,error}=await sb.from('profiles').select('*').eq('username',u).eq('password',p).single();
+  try{
+    if(u.toLowerCase()==='admin'&&p==='joaomendes2024'){CU={username:'admin',name:'João Mendes',is_admin:true,week_goal:0};isA=true;enterApp();b.disabled=false;b.textContent='Entrar →';return;}
+    const {data,error}=await sb.from('profiles').select('*').eq('username',u).eq('password',p).single();
+    if(error||!data){qs('lE').textContent='Utilizador ou password incorretos.';}
+    else{CU=data;isA=false;enterApp();}
+  }catch(e){qs('lE').textContent='Erro de ligação. Tenta novamente.';}
   b.disabled=false;b.textContent='Entrar →';
-  if(error||!data){qs('lE').textContent='Utilizador ou password incorretos.';return;}
-  CU=data;isA=false;enterApp();
 }
 
 async function srchName(){
@@ -545,7 +547,7 @@ async function doReg(){
 function logout(){CU=null;isA=false;showScr('as');qs('lU').value='';qs('lP').value='';}
 
 function enterApp(){
-  if(isA){showScr('aa');['ap-cl','ap-pl','ap-nu'].forEach(id=>{const el=qs(id);if(el)el.style.display='none';});qs('ap-cl').style.display='block';loadACl();}
+  if(isA){showScr('aa');loadACl();}
   else{
     showScr('ca');
     qs('cAv').textContent=CU.name.split(' ').slice(0,2).map(n=>n[0]).join('').toUpperCase();
@@ -557,7 +559,7 @@ function enterApp(){
 // ── CLIENT NAV ──
 function cNav(p,btn){
   document.querySelectorAll('#ca .nb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
-  document.querySelectorAll('[id^="p-"]').forEach(x=>x.style.display='none');qs('p-'+p).style.display='block';
+  ['p-dash','p-tr','p-pl','p-pe','p-nu','p-di'].forEach(id=>{const el=qs(id);if(el)el.style.display='none';});qs('p-'+p).style.display='block';
   const titles={dash:'Início',tr:'Os meus treinos',pl:'Plano de treino',pe:'Peso e medidas',nu:'Nutrição',di:'Diário alimentar'};
   qs('cT').textContent=titles[p];
   qs('fab').style.display=(p==='dash'||p==='tr')?'flex':'none';
@@ -738,7 +740,7 @@ function swNT(t,btn){document.querySelectorAll('#p-nu .ptt').forEach(x=>x.classL
 // ── ADMIN NAV ──
 function aN(p,btn){
   document.querySelectorAll('#aa .nb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
-  ['ap-cl','ap-pl','ap-nu'].forEach(id=>qs(id).style.display='none');qs('ap-'+p).style.display='block';
+  ['ap-cl','ap-pl','ap-nu'].forEach(id=>{const el=qs(id);if(el)el.style.display='none';});qs('ap-'+p).style.display='block';
   if(p==='cl')loadACl();else if(p==='pl')loadAPl();else if(p==='nu')loadANu();
 }
 
@@ -985,7 +987,8 @@ function swANT(t,btn){
   qs('an-dc').style.display=t==='dc'?'block':'none';qs('an-pa').style.display=t==='pa'?'block':'none';
 }
 
-qs('lP').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+qs('lP').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();doLogin();}});
+qs('lU').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();doLogin();}});
 
 function openPDF(encodedData){
   const data = decodeURIComponent(encodedData);
