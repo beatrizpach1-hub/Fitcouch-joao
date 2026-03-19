@@ -293,6 +293,7 @@ input,select,textarea,button{font-family:inherit}
     <div class="mc scroll" id="p-pl" style="position:absolute;inset:0;display:none"></div>
     <div class="mc scroll" id="p-pe" style="position:absolute;inset:0;display:none"></div>
     <div class="mc scroll" id="p-nu" style="position:absolute;inset:0;display:none"></div>
+    <div class="mc scroll" id="p-di" style="position:absolute;inset:0;display:none"></div>
   </div>
   <div class="bn">
     <button class="nb on" data-p="dash" onclick="cNav('dash',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Início</span></button>
@@ -300,6 +301,7 @@ input,select,textarea,button{font-family:inherit}
     <button class="nb" data-p="pl" onclick="cNav('pl',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg><span>Plano</span></button>
     <button class="nb" data-p="pe" onclick="cNav('pe',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 4-7"/></svg><span>Medidas</span></button>
     <button class="nb" data-p="nu" onclick="cNav('nu',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8 2 5 5.5 5 9c0 3 1.5 5.5 4 7v4h6v-4c2.5-1.5 4-4 4-7 0-3.5-3-7-7-7z"/></svg><span>Nutrição</span></button>
+    <button class="nb" data-p="di" onclick="cNav('di',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/><circle cx="17" cy="17" r="4"/><path d="M17 15v2l1 1"/></svg><span>Diário</span></button>
   </div>
   <button class="fab" id="fab" onclick="oTr()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></button>
 </div>
@@ -341,6 +343,42 @@ input,select,textarea,button{font-family:inherit}
     <div class="brow">
       <button class="bg" onclick="cM('mTr')">Cancelar</button>
       <button class="ba" id="bST" onclick="saveTr()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DIARIO -->
+<div class="ov h" id="mDi">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt2">Adicionar refeição</div>
+    <div class="f"><label>Data</label><input type="date" id="diD"/></div>
+    <div class="f">
+      <label>Tipo de refeição</label>
+      <select id="diTy">
+        <option value="pequeno-almoco">☀️ Pequeno-almoço</option>
+        <option value="almoco">🍽️ Almoço</option>
+        <option value="lanche">🍎 Lanche</option>
+        <option value="jantar">🌙 Jantar</option>
+        <option value="snack">🥜 Snack</option>
+      </select>
+    </div>
+    <div class="f">
+      <label>O que comeste? (um alimento por linha)</label>
+      <textarea class="ta" id="diFood" placeholder="Ex:&#10;frango grelhado 200g&#10;arroz branco 150g&#10;salada mista&#10;maçã" style="min-height:120px"></textarea>
+    </div>
+    <div id="diCalc" style="display:none;background:var(--bg3);border-radius:10px;padding:12px;margin-bottom:12px">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Estimativa calórica:</div>
+      <div id="diCalcList" style="font-size:13px;line-height:1.8"></div>
+      <div style="border-top:1px solid var(--bg4);margin-top:8px;padding-top:8px;display:flex;justify-content:space-between">
+        <span style="font-size:13px;font-weight:600">Total estimado</span>
+        <span id="diCalcTotal" style="font-size:16px;font-weight:700;color:var(--acc)"></span>
+      </div>
+    </div>
+    <button onclick="calcCals()" class="bg" style="width:100%;margin-bottom:8px">🔢 Calcular calorias</button>
+    <div class="brow">
+      <button class="bg" onclick="cM('mDi')">Cancelar</button>
+      <button class="ba" id="bSDi" onclick="saveDiary()">Guardar</button>
     </div>
   </div>
 </div>
@@ -502,11 +540,11 @@ function enterApp(){
 function cNav(p,btn){
   document.querySelectorAll('#ca .nb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
   document.querySelectorAll('[id^="p-"]').forEach(x=>x.style.display='none');qs('p-'+p).style.display='block';
-  const titles={dash:'Início',tr:'Os meus treinos',pl:'Plano de treino',pe:'Peso e medidas',nu:'Nutrição'};
+  const titles={dash:'Início',tr:'Os meus treinos',pl:'Plano de treino',pe:'Peso e medidas',nu:'Nutrição',di:'Diário alimentar'};
   qs('cT').textContent=titles[p];
   qs('fab').style.display=(p==='dash'||p==='tr')?'flex':'none';
-  if(p==='dash')loadDash();else if(p==='tr')loadTr();else if(p==='pl')loadPl();else if(p==='pe')loadPe();else if(p==='nu')loadNu();
-  if(p==='pe')qs('fab').onclick=()=>oM('mPe');else qs('fab').onclick=()=>oTr();
+  if(p==='dash')loadDash();else if(p==='tr')loadTr();else if(p==='pl')loadPl();else if(p==='pe')loadPe();else if(p==='nu')loadNu();else if(p==='di')loadDiary();
+  if(p==='pe')qs('fab').onclick=()=>oM('mPe');else if(p==='di')qs('fab').onclick=()=>oM('mDi');else qs('fab').onclick=()=>oTr();
 }
 
 // ── DASHBOARD ──
@@ -886,6 +924,140 @@ function swANT(t,btn){
 }
 
 qs('lP').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
+// ── FOOD DATABASE (calorias por 100g estimadas) ──
+const FOODS = {
+  // Proteínas
+  'frango':165,'peito de frango':165,'frango grelhado':165,'frango cozido':150,'peru':135,'atum':130,'salmão':208,'bacalhau':90,'ovos':155,'ovo':78,'clara de ovo':17,'atum lata':100,'sardinha':200,'camarão':85,'carne':250,'bife':200,'carne picada':280,'porco':260,'presunto':145,
+  // Hidratos
+  'arroz':130,'arroz cozido':130,'massa':220,'esparguete':220,'pão':265,'pão integral':247,'batata':87,'batata cozida':87,'batata doce':90,'aveia':389,'flocos de aveia':389,'granola':450,'cereais':380,'quinoa':120,'feijão':127,'grão':164,'lentilhas':116,
+  // Vegetais
+  'alface':15,'tomate':18,'pepino':16,'cenoura':41,'brócolos':34,'espinafres':23,'courgette':17,'pimento':31,'cebola':40,'alho':149,'cogumelos':22,'salada':15,'legumes':35,'vegetais':35,'couve':25,'feijão verde':31,'ervilhas':81,'milho':86,'beterraba':43,'abóbora':26,
+  // Frutas  
+  'maçã':52,'banana':89,'laranja':47,'uvas':69,'morango':32,'mirtilo':57,'pera':57,'manga':60,'ananás':50,'melão':34,'melancia':30,'kiwi':61,'pêssego':39,'ameixa':46,'cereja':63,'framboesa':52,'abacate':160,
+  // Laticínios
+  'leite':61,'iogurte':59,'iogurte grego':100,'queijo':350,'queijo fresco':90,'requeijão':90,'manteiga':717,'natas':195,
+  // Gorduras e outros
+  'azeite':884,'óleo':884,'amendoim':567,'amêndoa':579,'noz':654,'castanha':245,'chocolate':545,'mel':304,'açúcar':387,
+  // Snacks e outros
+  'batata frita':536,'pipocas':375,'bolacha':450,'bolo':350,'gelado':200,
+};
+
+function estimateCals(text) {
+  const lines = text.toLowerCase().split('\n').filter(l=>l.trim());
+  const results = [];
+  let total = 0;
+  
+  lines.forEach(line => {
+    line = line.trim();
+    if(!line) return;
+    
+    // Extract quantity in grams
+    const gramsMatch = line.match(/(\d+)\s*g/);
+    const mlMatch = line.match(/(\d+)\s*ml/);
+    const unitsMatch = line.match(/(\d+)\s*(unidade|fatia|copo|colher|colheres)/);
+    
+    let grams = 100; // default
+    if(gramsMatch) grams = parseInt(gramsMatch[1]);
+    else if(mlMatch) grams = parseInt(mlMatch[1]);
+    else if(unitsMatch) grams = parseInt(unitsMatch[1]) * 100;
+    
+    // Find food in database
+    let calsper100 = null;
+    let foundFood = '';
+    
+    // Try to match food name
+    const cleanLine = line.replace(/\d+g?\s*(g|ml|unidade|fatia|copo|colher|colheres)?/g,'').trim();
+    
+    // Sort by length desc to match longer names first
+    const sorted = Object.keys(FOODS).sort((a,b)=>b.length-a.length);
+    for(const food of sorted) {
+      if(cleanLine.includes(food)) {
+        calsper100 = FOODS[food];
+        foundFood = food;
+        break;
+      }
+    }
+    
+    if(calsper100) {
+      const cals = Math.round(calsper100 * grams / 100);
+      total += cals;
+      results.push({line, cals, found:true});
+    } else {
+      // Unknown food - estimate 100 cals per 100g
+      const cals = Math.round(100 * grams / 100);
+      total += cals;
+      results.push({line, cals, found:false});
+    }
+  });
+  
+  return {results, total};
+}
+
+function calcCals() {
+  const food = qs('diFood').value.trim();
+  if(!food){toast('Escreve o que comeste');return;}
+  const {results, total} = estimateCals(food);
+  const listEl = qs('diCalcList');
+  listEl.innerHTML = results.map(r=>`<div style="display:flex;justify-content:space-between"><span style="color:${r.found?'var(--text)':'var(--text3)'}">${r.line}</span><span style="color:var(--acc);font-weight:600;margin-left:10px">${r.cals} kcal</span></div>`).join('');
+  qs('diCalcTotal').textContent = total + ' kcal';
+  qs('diCalc').style.display = 'block';
+}
+
+async function saveDiary() {
+  const date = qs('diD').value, type = qs('diTy').value, food = qs('diFood').value.trim();
+  if(!date||!food){toast('Preenche a data e o que comeste');return;}
+  const {total} = estimateCals(food);
+  const b = qs('bSDi'); b.disabled=true; b.textContent='A guardar…';
+  await sb.from('food_diary').insert({user_id:CU.id, date, meal_type:type, foods:food, calories:total});
+  b.disabled=false; b.textContent='Guardar';
+  cM('mDi'); qs('diFood').value=''; qs('diCalc').style.display='none';
+  toast('Refeição guardada! 🥗');
+  loadDiary();
+}
+
+async function loadDiary() {
+  const el = qs('p-di'); el.innerHTML='<div class="em"><div class="ei">⏳</div><p>A carregar…</p></div>';
+  qs('diD').value = td();
+  const {data} = await sb.from('food_diary').select('*').eq('user_id',CU.id).order('date',{ascending:false}).order('created_at',{ascending:false}).limit(30);
+  const meals = data||[];
+  
+  if(!meals.length){el.innerHTML='<div class="em"><div class="ei">🥗</div><p>Sem refeições registadas.<br/>Carrega no + para adicionar!</p></div>';return;}
+  
+  // Group by date
+  const groups = {};
+  meals.forEach(m=>{if(!groups[m.date])groups[m.date]=[];groups[m.date].push(m);});
+  
+  const icons = {'pequeno-almoco':'☀️','almoco':'🍽️','lanche':'🍎','jantar':'🌙','snack':'🥜'};
+  
+  el.innerHTML = Object.entries(groups).map(([date, items])=>{
+    const dayTotal = items.reduce((s,m)=>s+(m.calories||0),0);
+    const bars = items.map(m=>{
+      const pct = Math.min(100, Math.round((m.calories||0)/dayTotal*100));
+      return `<div class="wi">
+        <div style="font-size:20px;flex-shrink:0">${icons[m.meal_type]||'🍽️'}</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500;margin-bottom:4px">${m.meal_type.replace('-',' ').replace(/\b\w/g,c=>c.toUpperCase())}</div>
+          <div style="font-size:12px;color:var(--text2);white-space:pre-line">${m.foods}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:14px;font-weight:700;color:var(--acc)">${m.calories||0}</div>
+          <div style="font-size:10px;color:var(--text3)">kcal</div>
+        </div>
+      </div>`;
+    }).join('');
+    
+    const calCls = dayTotal>2500?'up':dayTotal>1800?'eq':'dn';
+    return `<div class="st" style="margin-top:14px">${fmt(date)}</div>
+    <div class="card" style="padding:0 14px">
+      ${bars}
+      <div style="border-top:1px solid var(--bg3);padding:10px 0;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;font-weight:600">Total do dia</span>
+        <span class="dif ${calCls}" style="font-size:14px">${dayTotal} kcal</span>
+      </div>
+    </div>`;
+  }).join('');
+}
 
 function togglePwd(id,btn){
   const inp=qs(id);
