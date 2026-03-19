@@ -545,7 +545,7 @@ async function doReg(){
 function logout(){CU=null;isA=false;showScr('as');qs('lU').value='';qs('lP').value='';}
 
 function enterApp(){
-  if(isA){showScr('aa');loadACl();}
+  if(isA){showScr('aa');['ap-cl','ap-pl','ap-nu'].forEach(id=>{const el=qs(id);if(el)el.style.display='none';});qs('ap-cl').style.display='block';loadACl();}
   else{
     showScr('ca');
     qs('cAv').textContent=CU.name.split(' ').slice(0,2).map(n=>n[0]).join('').toUpperCase();
