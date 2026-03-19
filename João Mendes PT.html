@@ -1080,11 +1080,12 @@ function calcCals() {
   qs('diCalc').style.display = 'block';
 }
 
-async function delDiaryEntry(id){
+async function delDiaryEntry(id, date){
   if(!confirm('Eliminar esta refeição?')) return;
   await sb.from('food_diary').delete().eq('id',id);
   toast('Refeição eliminada!');
-  loadDiary();
+  if(date) showDayDetail(date);
+  else loadDiary();
 }
 
 async function saveDiary() {
@@ -1102,7 +1103,7 @@ async function saveDiary() {
 async function loadDiary() {
   const el = qs('p-di'); el.innerHTML='<div class="em"><div class="ei">⏳</div><p>A carregar…</p></div>';
   qs('diD').value = td();
-  const {data} = await sb.from('food_diary').select('*').eq('user_id',CU.id).order('date',{ascending:false}).order('created_at',{ascending:false}).limit(30);
+  const {data} = await sb.from('food_diary').select('*').eq('user_id',CU.id).order('date',{ascending:false}).order('created_at',{ascending:false}).limit(60);
   const meals = data||[];
   
   if(!meals.length){el.innerHTML='<div class="em"><div class="ei">🥗</div><p>Sem refeições registadas.<br/>Carrega no + para adicionar!</p></div>';return;}
@@ -1110,37 +1111,77 @@ async function loadDiary() {
   // Group by date
   const groups = {};
   meals.forEach(m=>{if(!groups[m.date])groups[m.date]=[];groups[m.date].push(m);});
-  
   const icons = {'pequeno-almoco':'☀️','almoco':'🍽️','lanche':'🍎','jantar':'🌙','snack':'🥜'};
-  
+
+  // Show day summary cards
   el.innerHTML = Object.entries(groups).map(([date, items])=>{
     const dayTotal = items.reduce((s,m)=>s+(m.calories||0),0);
-    const bars = items.map(m=>{
-      const mName = m.meal_type.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-      return `<div class="wi" style="align-items:flex-start;gap:12px">
-        <div style="font-size:22px;flex-shrink:0;padding-top:2px">${icons[m.meal_type]||'🍽️'}</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:600;margin-bottom:3px">${mName}</div>
-          <div style="font-size:12px;color:var(--text2);line-height:1.5">${m.foods}</div>
-        </div>
-        <div style="flex-shrink:0;text-align:right">
-          <div style="font-size:16px;font-weight:700;color:var(--acc)">${m.calories||0}</div>
-          <div style="font-size:10px;color:var(--text3);margin-bottom:4px">kcal</div>
-          <button onclick="delDiaryEntry('${m.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:0">×</button>
-        </div>
-      </div>`;
-    }).join('');
-    
     const calCls = dayTotal>2500?'up':dayTotal>1800?'eq':'dn';
-    return `<div class="st" style="margin-top:14px">${fmt(date)}</div>
-    <div class="card" style="padding:0 14px">
-      ${bars}
-      <div style="border-top:1px solid var(--bg3);padding:10px 0;display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:13px;font-weight:600">Total do dia</span>
-        <span class="dif ${calCls}" style="font-size:14px">${dayTotal} kcal</span>
+    const mealIcons = [...new Set(items.map(m=>icons[m.meal_type]||'🍽️'))].join(' ');
+    const calBar = Math.min(100, Math.round(dayTotal/25));
+    const barColor = dayTotal>2500?'var(--red)':dayTotal>1800?'var(--orange)':'var(--acc)';
+    return `<div onclick="showDayDetail('${date}')" style="background:var(--bg2);border-radius:16px;padding:16px;margin-bottom:10px;cursor:pointer;active:opacity:.8">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <div style="font-size:15px;font-weight:700">${fmt(date)}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">${mealIcons} · ${items.length} refeição(ões)</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:24px;font-weight:800;color:${barColor}">${dayTotal}</div>
+          <div style="font-size:11px;color:var(--text2)">kcal</div>
+        </div>
+      </div>
+      <div style="height:4px;background:var(--bg4);border-radius:2px;overflow:hidden">
+        <div style="height:100%;width:${calBar}%;background:${barColor};border-radius:2px;transition:width .5s"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;text-align:right">
+        ${dayTotal<1500?'⚠️ Abaixo do recomendado':dayTotal>2500?'⚠️ Acima do recomendado':'✓ Dentro do recomendado'}
       </div>
     </div>`;
   }).join('');
+}
+
+function showDayDetail(date) {
+  const el = qs('p-di');
+  const icons = {'pequeno-almoco':'☀️','almoco':'🍽️','lanche':'🍎','jantar':'🌙','snack':'🥜'};
+  
+  // Get meals for this day from DOM data
+  sb.from('food_diary').select('*').eq('user_id',CU.id).eq('date',date).order('created_at',{ascending:true}).then(({data})=>{
+    const meals = data||[];
+    const dayTotal = meals.reduce((s,m)=>s+(m.calories||0),0);
+    const calColor = dayTotal>2500?'var(--red)':dayTotal>1800?'var(--orange)':'var(--acc)';
+    
+    const mealList = meals.map(m=>{
+      const mName = m.meal_type.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+      return `<div style="background:var(--bg3);border-radius:12px;padding:14px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:20px">${icons[m.meal_type]||'🍽️'}</span>
+            <span style="font-size:14px;font-weight:600">${mName}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:16px;font-weight:700;color:${calColor}">${m.calories||0} kcal</span>
+            <button onclick="delDiaryEntry('${m.id}','${date}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:0;line-height:1">×</button>
+          </div>
+        </div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.6;white-space:pre-line">${m.foods}</div>
+      </div>`;
+    }).join('');
+    
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <button onclick="loadDiary()" style="background:var(--bg3);border:none;border-radius:10px;padding:8px 14px;color:var(--text);cursor:pointer;font-size:13px">← Voltar</button>
+        <div style="font-size:17px;font-weight:700;flex:1">${fmt(date)}</div>
+      </div>
+      <div style="background:var(--bg2);border-radius:16px;padding:16px;margin-bottom:14px;text-align:center">
+        <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Total do dia</div>
+        <div style="font-size:42px;font-weight:800;color:${calColor};line-height:1">${dayTotal}</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:4px">kcal</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:8px">${dayTotal<1500?'⚠️ Abaixo do recomendado (1500-2500 kcal)':dayTotal>2500?'⚠️ Acima do recomendado (1500-2500 kcal)':'✓ Dentro do recomendado (1500-2500 kcal)'}</div>
+      </div>
+      <div class="st">Refeições</div>
+      ${mealList}`;
+  });
 }
 
 function togglePwd(id,btn){
